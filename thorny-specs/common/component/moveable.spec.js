@@ -47,7 +47,7 @@
 							
 						} catch (e) {
 							expect(true).toBeTruthy();
-							expect(e.message).toEqual('entity.addComponent(moveable, "undefined"); Failed to attach to the entity.');
+							expect(e.message).toEqual('entity.addComponent(moveable, "[]"); Failed to attach to the entity.');
 							expect(entity.hasComponent('moveable')).toBeFalsy();
 							
 							ran = true;

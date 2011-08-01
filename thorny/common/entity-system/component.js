@@ -10,12 +10,18 @@
 				 * Used to add components to this entity
 				 * @param string name Contains the name of a component that is
 				 * to be added to this entity
-				 * @param object options Contains component specific options
-				 * or a concrete entity.
+				 * @param vararg Contains component specific options or a
+				 * concrete entity.
 				 * @return this Allowing for object chaining
 				 */
-				entity.addComponent = function (name, options) {
-					var component = $.data(module, 'registered-components')[name];
+				entity.addComponent = function (name) {
+					var 
+						component = $.data(module, 'registered-components')[name],
+						options = Array.prototype.slice.call(arguments);
+					
+					// Remove the name of the vararg
+					options.shift();
+					
 					if (component === undefined) {
 						throw new Error(
 							'entity.addComponent(' + name + ', "' + 
@@ -24,7 +30,7 @@
 					}
 					
 					// Invoke the new component.
-					component = component();
+					component = component(entity);
 					
 					// If a component is unique then it can only be added once.
 					if (component.isUnique && this.hasComponent(name)) {
@@ -43,10 +49,9 @@
 					
 					// If the component === false then it means it wasn't 
 					// attached to the entity.
-					if (component.attach(entity, options) === false) {
+					if (component.attach.apply(component, options) === false) {
 						throw new Error(
-							'entity.addComponent(' + name + ', "' + 
-							JSON.stringify(options) + '"); Failed to attach to the entity.'
+							'entity.addComponent(' + name + ', "' + JSON.stringify(options) + '"); Failed to attach to the entity.'
 						);
 					}
 					
@@ -197,7 +202,7 @@
 						);
 					}
 					
-					$.data(module, 'registered-components')[name] = function () {
+					$.data(module, 'registered-components')[name] = function (entity) {
 						return $._.extend(
 							(function () {
 								return {
@@ -274,7 +279,7 @@
 									}
 								};
 							}()),
-							callback()
+							callback(entity)
 							);
 					};
 				};

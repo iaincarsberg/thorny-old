@@ -46,9 +46,9 @@
 		$.onInit(module, function () {
 			$.data(module, 'moveable', {});
 			
-			$.es().registerComponent('moveable', function () {
+			$.es().registerComponent('moveable', function (entity) {
 				return {
-					attach: function (entity, options) {
+					attach: function (options) {
 						// The position is required.
 						if (! entity.hasComponent('position')) {
 							return false;
@@ -59,7 +59,7 @@
 						
 						// Build a new movable object.
 						$.data(module, 'moveable')[entity.id] = $._.extend(
-							entity.getComponent('position').data.expose(entity), {
+							entity.getComponent('position').data.expose(), {
 								user_facing: $('thorny math vector2').factory(options.user_facing.x, options.user_facing.y).normalize(),
 								speed: options.speed,
 								easing: options.easing,
@@ -70,7 +70,7 @@
 						);
 					},
 
-					execute: function (entity, options) {
+					execute: function (options) {
 						options = executeOptions($, options);
 						
 						// We need to know the current time, the time option 
@@ -102,7 +102,7 @@
 							processor = self.injected_processors[i];
 							
 							// Execute the processor code.
-							changes = processor(entity, {
+							changes = processor({
 								direction: direction,
 								position:  position,
 								distance:  distance,
@@ -132,7 +132,7 @@
 						}
 					},
 					
-					expose: function (entity) {
+					expose: function () {
 						return $.data(module, 'moveable')[entity.id];
 					},
 					

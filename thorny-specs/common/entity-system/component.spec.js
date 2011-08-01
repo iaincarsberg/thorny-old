@@ -455,7 +455,7 @@
 								expect(false).toBeTruthy();
 								
 							} catch (e) {
-								expect(e.message).toEqual('entity.addComponent(a, "undefined"); in unique, can cannot be added multiple times to one entity');
+								expect(e.message).toEqual('entity.addComponent(a, "[]"); in unique, can cannot be added multiple times to one entity');
 								expect(true).toBeTruthy();
 							}
 							

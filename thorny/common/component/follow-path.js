@@ -67,7 +67,7 @@
 		$.onInit(module, function () {
 			$.data(module, 'paths', {});
 			
-			$.es().registerComponent('follow-path', function () {
+			$.es().registerComponent('follow-path', function (entity) {
 				return {
 					// You can have multiple paths
 					isUnique: false,
@@ -76,7 +76,7 @@
 					// select the correct path.
 					processAsCollection: true,
 					
-					attach: function (entity, options) {
+					attach: function (options) {
 						var base = this;
 						
 						// The position is required.
@@ -117,9 +117,8 @@
 						// moveable update.
 						entity.getComponent('moveable')
 							.data
-							.inject(entity, function (entity, data) {
+							.inject(entity, function (data) {
 								return base.execute(
-									entity,
 									$._.extend({path: $.data(module, 'paths')[entity.id][options.name]}, data)
 									);
 							});
@@ -135,10 +134,7 @@
 					 * distance the moveable is able to move this tick.
 					 * @return void
 					 */
-					execute: function (entity, options) {
-						//if (moveable.position.getX() > 500 || moveable.position.getX() < 50) {
-						//	moveable.facing = $('thorny math vector2').factory(moveable.facing.getX() * -1, 0);
-						//}
+					execute: function (options) {
 						options = executeOptions($, options);
 						
 						// Makesure the options are valid
@@ -156,7 +152,7 @@
 							newPosition,
 							goalX;
 						
-						if (options.path.node === false) {
+						if (options.path.node === false && options.path.target !== false) {
 							options.path.node = 0;
 							options.path.target = options.path.route[options.path.node];
 							options.direction = options.position.rotateToFace(options.path.target);
@@ -195,11 +191,11 @@
 						return options;
 					},
 					
-					expose: function (entity) {
+					expose: function () {
 						return $.data(module, 'moveable')[entity.id];
 					},
 					
-					inject: function (entity, name, code) {
+					inject: function (name, code) {
 						// TODO
 						// The Idea here is that other components such as the
 						// pathfinder and collision detector can inject 

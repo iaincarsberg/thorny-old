@@ -39,6 +39,9 @@
 					require('thorny/base')('./config/default.json')(function ($) {
 						// Setup
 						$.es().makeEntity()
+							.addTag('@75-50 0-0')
+							.addComponent('position', 75, 50);
+						$.es().makeEntity()
 							.addTag('@0-0 100-0')
 							.addComponent('position', {
 								facing: {x: 100, y: 0}
@@ -72,6 +75,12 @@
 							);
 						
 						// Tests
+						// @75-50 0-0
+						expect(data[$.getTag('@75-50 0-0').id].position.getSimpleCoords())
+							.toEqual([75, 50]);
+						expect(data[$.getTag('@75-50 0-0').id].facing.getSimpleCoords())
+							.toEqual([0, 0]);
+							
 						// @0-0 100-0
 						expect(data[$.getTag('@0-0 100-0').id].position.getSimpleCoords())
 							.toEqual([0, 0]);
@@ -143,7 +152,7 @@
 									.toEqual(expected[i].x);
 								expect(position.data.expose(this).position.getY())
 									.toEqual(expected[i].y);
-									
+								
 								i += 1;
 								
 								ran = true;

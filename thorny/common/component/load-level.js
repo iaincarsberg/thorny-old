@@ -9,7 +9,7 @@
 		$.onInit(module, function () {
 			$.data(module, 'loaded-levels', {});
 			
-			$.es().registerComponent('load-level', function () {
+			$.es().registerComponent('load-level', function (entity) {
 				return {
 					/**
 					 * Contains an instance of the $.level() module.
@@ -39,7 +39,7 @@
 					 * @throws 'Thorny.level: Attempted to load malformed level'
 					 * @throws component.load-level.attach(n, "path.json"); unable to attach file because type not mesh'
 					 */
-					attach: function (entity, file) {
+					attach: function (file) {
 						var level = this;
 						if (typeof file !== 'string') {
 							return false;

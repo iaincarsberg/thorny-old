@@ -27,9 +27,20 @@
 		$.onInit(module, function () {
 			$.data(module, 'positions', {});
 			
-			$.es().registerComponent('position', function () {
+			$.es().registerComponent('position', function (entity) {
 				return {
-					attach: function (entity, options) {
+					attach: function (options) {
+						if (options !== undefined && typeof options !== 'object') {
+							if (arguments.length >= 2 && typeof arguments[0] === 'number' && typeof arguments[1] === 'number') {
+								options = {
+									position: {
+										x: arguments[0],
+										y: arguments[1]
+									}
+								};
+							}
+						}
+						
 						options = attachOptions($, options);
 						$.data(module, 'positions')[entity.id] = {
 							position: $('thorny math vector2').factory(options.position.x, options.position.y),
@@ -37,11 +48,11 @@
 						};
 					},
 
-					execute: function (entity) {
+					execute: function () {
 						return $.data(module, 'positions')[entity.id];
 					},
 					
-					expose: function (entity) {
+					expose: function () {
 						return $.data(module, 'positions')[entity.id];
 					}
 				};

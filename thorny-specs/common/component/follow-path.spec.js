@@ -55,7 +55,7 @@
 							expect(false).toBeTruthy();
 							
 						} catch (e) {
-							expect(e.message).toEqual('entity.addComponent(moveable, "undefined"); Failed to attach to the entity.');
+							expect(e.message).toEqual('entity.addComponent(moveable, "[]"); Failed to attach to the entity.');
 							expect(true).toBeTruthy();
 						}
 						
@@ -80,7 +80,7 @@
 							expect(false).toBeTruthy();
 							
 						} catch (e) {
-							expect(e.message).toEqual('entity.addComponent(follow-path, "undefined"); Failed to attach to the entity.');
+							expect(e.message).toEqual('entity.addComponent(follow-path, "[]"); Failed to attach to the entity.');
 							expect(true).toBeTruthy();
 						}
 						
@@ -108,7 +108,7 @@
 							expect(false).toBeTruthy();
 							
 						} catch (e1) {
-							expect(e1.message).toEqual('entity.addComponent(follow-path, "undefined"); Failed to attach to the entity.');
+							expect(e1.message).toEqual('entity.addComponent(follow-path, "[]"); Failed to attach to the entity.');
 							expect(true).toBeTruthy();
 						}
 						
@@ -120,7 +120,7 @@
 							expect(false).toBeTruthy();
 							
 						} catch (e2) {
-							expect(e2.message).toEqual("entity.addComponent(follow-path, \"{\"hello\":\"world\"}\"); Failed to attach to the entity.");
+							expect(e2.message).toEqual("entity.addComponent(follow-path, \"[{\"hello\":\"world\"}]\"); Failed to attach to the entity.");
 							expect(true).toBeTruthy();
 						}
 						
@@ -145,7 +145,7 @@
 								.addComponent('position')
 								.addComponent('moveable')
 								.addComponent('follow-path', {name: 'route-1'});
-
+							
 							expect(typeof data[entity.id]).toEqual('object');
 							expect(typeof data[entity.id]['route-1']).toEqual('object');
 							expect(typeof data[entity.id]['route-1'].route).toEqual('object');
@@ -160,7 +160,7 @@
 							expect(data[entity.id]['route-1'].type).toEqual('once');
 							expect(data[entity.id]['route-1'].node).toBeFalsy();
 							expect(data[entity.id]['route-1'].target).toBeFalsy();
-							expect(data[entity.id]['route-1'].retain).toBeTruthy();
+							expect(data[entity.id]['route-1'].retain).toBeFalsy();
 							expect(data[entity.id]['route-1'].force_active).toBeTruthy();
 							
 							ran = true;
@@ -222,6 +222,10 @@
 					});
 				});// it should add a new element using custom values
 			});// desc the process of adding a new path to an entity, that should be stored within the $.data('paths')
+			
+			describe('that has a retain system for storing and removing alternative paths', function () {
+				// TODO
+			});
 		});// desc has an attach function
 		
 		describe('has an update function', function () {
@@ -229,7 +233,58 @@
 		});// desc has an update function
 		
 		describe('has an execute function', function () {
-			// TODO
+			describe('that works differently depending on the loop type', function () {
+				describe('with linear paths', function () {
+					// TODO
+				});// desc with linear paths
+				
+				describe('with cycling paths', function () {
+					it('should move the entity along the path', function () {
+						var ran = false;
+
+						runs(function () {
+							require('thorny/base')('./config/default.json')(function ($) {
+								var 
+									data = $.data('thorny component follow-path', 'paths');
+								
+								$.es().makeEntity()
+									.addTag('actor')
+									.addComponent('position', 0, 0)
+									.addComponent('moveable')
+									.addComponent('follow-path', {
+										name: 'route-1',
+										type: 'cycle',
+										retain: true,
+										route: [
+											{x: 100, y: 0},
+											{x: 100, y: 100},
+											{x: 0, y: 100},
+											{x: 0, y: 0}
+										]
+									});
+								
+								$.getTag('actor').executeComponent('moveable');
+								
+								$.getTag('actor').getComponent('position').first(function (position) {
+									// TODO
+									/*
+									console.log(
+										position//,
+										// position.expose()
+										);
+									*/
+								});
+									
+								ran = true;
+							});//instanceof thorny
+						});
+						waits(200);
+						runs(function () {
+							expect(ran).toBeTruthy();
+						});
+					});// it should move the entity along the path
+				});// desc with cycling paths
+			});// desc that works differently depending on the loop type
 		});// desc has an execute function
 		
 		describe('has an expose function', function () {

@@ -6,13 +6,13 @@
 	 * @return object Containing the injected observable functionality.
 	 */
 	module.exports = function ($, module) {
-		$.es().registerComponent('notunique', function () {
+		$.es().registerComponent('notunique', function (entity) {
 			return {
 				name: 'component notunique',
 				isUnique: false,
 				someUniqueValue: false,
 				
-				attach: function (entity, someUniqueValue) {
+				attach: function (someUniqueValue) {
 					this.someUniqueValue = someUniqueValue;
 				}
 			};
