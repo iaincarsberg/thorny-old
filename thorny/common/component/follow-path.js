@@ -152,7 +152,7 @@
 							newPosition,
 							goalX;
 						
-						if (options.path.node === false && options.path.target !== false) {
+						if (options.path.node === false && options.path.target === false) {
 							options.path.node = 0;
 							options.path.target = options.path.route[options.path.node];
 							options.direction = options.position.rotateToFace(options.path.target);

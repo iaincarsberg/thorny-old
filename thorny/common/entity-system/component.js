@@ -183,7 +183,7 @@
 					var thisEntity = this;
 					this.getComponent(name)
 						.each(function (component) {
-							component.execute(thisEntity, options);
+							component.execute(options);
 						});
 				};
 			});
