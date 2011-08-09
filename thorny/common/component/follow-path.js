@@ -147,45 +147,49 @@
 							return;
 						}
 						
-						var
-							node,
-							newPosition,
-							goalX;
-						
-						if (options.path.node === false && options.path.target === false) {
+						// Default the node
+						if (! options.path.node) {
 							options.path.node = 0;
+						}
+						
+						// Default the target, if there are enough points in the route
+						if (! options.path.target && options.path.route.length > options.path.node) {
 							options.path.target = options.path.route[options.path.node];
+							
 							options.direction = options.position.rotateToFace(options.path.target);
 						}
 						
-						// If we're close to the goal
-						if (options.path.target && 
-							options.position.distance(options.path.target) < options.distance
-						) {
-							options.path.node += 1;
+						while (true) {
+							var toTarget = options.position.distance(options.path.target);
 							
-							if (options.path.type === 'once') {
-								if (options.path.node === options.path.route.length) {
-									options.path.target = false;
-									
-								} else {
+							// If the traveled distance is grater than the 
+							// distance to the target, then we need to move to
+							// the target, and check the next target in 
+							// the chain.
+							if (options.distance > toTarget) {
+								options.distance -= toTarget;
+								options.position = options.path.target;
+								options.path.node += 1;
+								
+								// Update the target
+								if (options.path.type === 'once') {
+									options.path.target = (options.path.node >= options.path.route.length) ? false : options.path.route[options.path.node];
+								
+								} else if (options.path.type === 'cycle') {
 									options.path.target = options.path.route[
-										options.path.node
+										(options.path.node % options.path.route.length)
 										];
 								}
 								
-							} else if (options.path.type === 'cycle') {
-								options.path.target = options.path.route[
-									(options.path.node % options.path.route.length)
-									];
-							}
-							
-							if (options.path.target) {
+								// Update the direction
 								options.direction = options.position.rotateToFace(options.path.target);
 								
-							} else {
-								options.direction = $('thorny math vector2').factory(0, 0);
+								// We want to iterate onto the next node, so continue.
+								continue;
 							}
+							
+							// All done :)
+							break;
 						}
 						
 						return options;
