@@ -20,7 +20,7 @@
 	module.exports = function ($) {
 		$.onInit(module, function () {
 			$.data(module, 'draw', {});
-			$.es().registerComponent('renderer', function () {
+			$.es().registerComponent('renderer', function (entity) {
 				return {
 					/**
 					 * Used to attach a renderer to an entity
@@ -29,7 +29,7 @@
 					 * @param string file Contains the file to load
 					 * @return void
 					 */
-					attach: function (entity, options) {
+					attach: function (options) {
 						options = attachOptions($, options);
 						
 						$.data(module, 'draw')[entity.id] = 
@@ -42,7 +42,7 @@
 					 * @param void
 					 * @return void
 					 */
-					execute: function (entity) {
+					execute: function () {
 						$.data(module, 'draw')[entity.id]();
 					}
 				};
