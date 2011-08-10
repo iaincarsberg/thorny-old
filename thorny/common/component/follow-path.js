@@ -14,26 +14,15 @@
 			return $._.extend((function () {
 				return {
 					// Required
-					// Contains the path name
-					name: false,
-					
 					// Contains the route that is to be followed
 					route: [],
 					
 					// Contains the loop type, can be 'once' or 'cycle'
 					type: 'once',
 					
-					// Used to flag this path as being a retainable path, 
-					// non-retainable paths will be dropped when a new path is
-					// added to an entity.
-					// Non-retained paths will also be dropped once completed 
-					// if type is set to 'once'
-					retain: false,
-					
-					// Used to conjunction with 'retain' to force a new path 
-					// to become the currently active path for the owning 
-					// moveable entity.
-					force_active: true
+					// Contains a function that is execute once a route has
+					// been compoleted.
+					complete: false
 				};
 			}()), options);
 		},
@@ -93,18 +82,13 @@
 							return false;
 						}
 						
-						// If this is the first path for this entity, build a
-						// container for them.
-						if ($.data(module, 'paths')[entity.id] === undefined) {
-							$.data(module, 'paths')[entity.id] = {};
-						}
-						
 						// Build a new path object.
-						$.data(module, 'paths')[entity.id][options.name] = {
+						$.data(module, 'paths')[entity.id] = {
 							route: base.vectorifyRoute(options.route),
 							type:  options.type,
-							retain: options.retain,
-							force_active: options.force_active,
+							
+							// Contains the callback
+							complete: options.complete,
 							
 							// Contains the id of the next item in the route
 							node: false,
@@ -119,7 +103,10 @@
 							.data
 							.inject(entity, function (data) {
 								return base.execute(
-									$._.extend({path: $.data(module, 'paths')[entity.id][options.name]}, data)
+									$._.extend(
+										{path: $.data(module, 'paths')[entity.id]}, 
+										data
+										)
 									);
 							});
 					},
@@ -159,14 +146,21 @@
 							options.direction = options.position.rotateToFace(options.path.target);
 						}
 						
+						var toTarget;
 						while (true) {
-							var toTarget = options.position.distance(options.path.target);
+							// If there is a target find out how far away it is.
+							if (options.path.target) {
+								toTarget = options.position.distance(options.path.target);
+								
+							} else {
+								toTarget = 0;
+							}
 							
 							// If the traveled distance is grater than the 
 							// distance to the target, then we need to move to
 							// the target, and check the next target in 
 							// the chain.
-							if (options.distance > toTarget) {
+							if (options.distance >= toTarget) {
 								options.distance -= toTarget;
 								options.position = options.path.target;
 								options.path.node += 1;
@@ -174,18 +168,32 @@
 								// Update the target
 								if (options.path.type === 'once') {
 									options.path.target = (options.path.node >= options.path.route.length) ? false : options.path.route[options.path.node];
-								
+									
 								} else if (options.path.type === 'cycle') {
 									options.path.target = options.path.route[
 										(options.path.node % options.path.route.length)
 										];
 								}
 								
-								// Update the direction
-								options.direction = options.position.rotateToFace(options.path.target);
+								// If the path has been completed call the 
+								// complete callback
+								if ((options.path.node % options.path.route.length) === 0 &&
+									typeof options.path.complete === 'function'
+								) {
+									options.path.complete();
+								}
 								
-								// We want to iterate onto the next node, so continue.
-								continue;
+								// Update the direction
+								if (options.path.target) {
+									options.direction = options.position.rotateToFace(options.path.target);
+									
+									// We want to iterate onto the next node, so continue.
+									continue;
+								
+								// If there is no target, remove the movement direction
+								} else {
+									options.direction = false;
+								}
 							}
 							
 							// All done :)
