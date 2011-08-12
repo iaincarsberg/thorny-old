@@ -109,14 +109,17 @@
 								goal:      goal
 							});
 							
-							// Move the changed values back out of the changes
-							// object, so that they can used by other
-							// processors, and finally inserted into
-							// the position.
-							direction = changes.direction;
-							position  = changes.position;
-							distance  = changes.distance;
-							goal      = changes.goal;
+							// If valid changes we're made
+							if (changes) {
+								// Move the changed values back out of the 
+								// changes object, so that they can used by 
+								// other processors, and finally inserted into
+								// the position.
+								direction = changes.direction;
+								position  = changes.position;
+								distance  = changes.distance;
+								goal      = changes.goal;
+							}
 						}
 						
 						
