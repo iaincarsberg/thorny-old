@@ -41,6 +41,7 @@ foreach ($raw_files as $file) {
 		<p>&copy; Iain Carsberg</p>
 	</footer>
 	<script src="/node.js"></script>
+	<script src="/thorny-specs/test-runner.js"></script>
 	<script src="/lib/json.js"></script>
 	<script src="/lib/jquery-1.6.1.min.js"></script>
 	<script src="/lib/underscore.js"></script>

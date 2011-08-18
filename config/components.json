@@ -1,11 +1,11 @@
 [
+	"thorny component lexical",
 	"thorny component load-level",
 	"thorny component pathfindable",
 	{
 		"path": "thorny component renderer",
 		"omitIfNodejs": true
 	},
-	"thorny component drawable",
 	"thorny component position",
 	"thorny component moveable",
 	"thorny component follow-path"

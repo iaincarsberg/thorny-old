@@ -17,5 +17,5 @@
 	},
 	"./config/entity-system.json",
 	"./config/level.json",
-	"./config/quad-tree.json"
+	"./config/spatial-hasher.json"
 ]

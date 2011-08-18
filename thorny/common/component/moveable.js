@@ -15,7 +15,8 @@
 				return {
 					user_facing: {x: 0, y: 0},
 					speed: 1,
-					easing: 'linear'// TODO
+					easing: 'linear',// TODO
+					size: 16
 				};
 			}()), options);
 		},
@@ -63,6 +64,7 @@
 								user_facing: $('thorny math vector2').factory(options.user_facing.x, options.user_facing.y).normalize(),
 								speed: options.speed,
 								easing: options.easing,
+								size: options.size,
 								current_speed: 0,
 								injected_processors: [],
 								last_exec_time: $.time().now()
