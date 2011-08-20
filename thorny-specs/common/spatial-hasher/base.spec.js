@@ -2,7 +2,21 @@
 (function () {
 	require.paths.unshift(__dirname + '/../../../');
 	
-	var runner = require('thorny-specs/test-runner');
+	var
+		runner = require('thorny-specs/test-runner'),
+		newEntity = function ($, name, x, y, size) {
+			return $.es().makeEntity()
+				.addTag(name)
+				.addComponent('drawable')
+				.addComponent('position', {
+					position: {
+						x: x, 
+						y: y
+					},
+					size: size
+				})
+				.addComponent('moveable');
+		};
 	
 	describe('the spatial-hasher module', function () {
 		it('should have the following functions', function () {
@@ -57,21 +71,9 @@
 					// Place the vector in the middle of a rasterised section,
 					// so when we rasterise it gives us an even box
 					runner(function ($, done) {
-						$.es().makeEntity()
-							.addTag('player')
-							.addComponent('drawable')
-							.addComponent('position', {
-								position: {
-									x: 72, 
-									y: 72
-								},
-								size: 48
-							})
-							.addComponent('moveable');
-						
 						$.spatial_hasher()
-							.inject($.getTag('player'))
-							.process(function (search) {
+							.inject(newEntity($, 'player', 72, 72, 48))
+							.process(function (instance) {
 								var 
 									x, xx,
 									y, yy,
@@ -85,16 +87,19 @@
 										[0, 1, 1, 1, 1, 1, 1, 1, 0],
 										[0, 1, 1, 1, 1, 1, 1, 1, 0],
 										[0, 0, 0, 0, 0, 0, 0, 0, 0]
-									];
+									],
+									expectation;
 								
 								for (y = 0, yy = level.length; y < yy; y += 1) {
 									for (x = 0, xx = level[y].length; x < xx; x += 1) {
+										expectation = expect(instance.search(x * 16, y * 16));
+										
 										if (level[y][x] === 1) {
-											expect(search(x * 16, y * 16)).toBeTruthy();
-											expect(search(x * 16, y * 16)).toEqual({1: true});
+											expectation.toBeTruthy();
+											expectation.toEqual({1: true});
 											
 										} else {
-											expect(search(x * 16, y * 16)).toBeFalsy();
+											expectation.toBeFalsy();
 										}
 									}
 								}
@@ -106,47 +111,11 @@
 				
 				it('should rasterise multiple simple shapes into the hashmap', function () {
 					runner(function ($, done) {
-						$.es().makeEntity()
-							.addTag('player_1')
-							.addComponent('drawable')
-							.addComponent('position', {
-								position: {
-									x: 24, 
-									y: 24
-								},
-								size: 16
-							})
-							.addComponent('moveable');
-							
-						$.es().makeEntity()
-							.addTag('player_2')
-							.addComponent('drawable')
-							.addComponent('position', {
-								position: {
-									x: 72, 
-									y: 72
-								},
-								size: 16
-							})
-							.addComponent('moveable');
-							
-						$.es().makeEntity()
-							.addTag('player_3')
-							.addComponent('drawable')
-							.addComponent('position', {
-								position: {
-									x: 24, 
-									y: 120
-								},
-								size: 16
-							})
-							.addComponent('moveable');
-						
 						$.spatial_hasher()
-								.inject($.getTag('player_1'))
-								.inject($.getTag('player_2'))
-								.inject($.getTag('player_3'))
-							.process(function (search) {
+							.inject(newEntity($, 'player-1', 24, 24, 16))
+							.inject(newEntity($, 'player-2', 72, 72, 16))
+							.inject(newEntity($, 'player-3', 24, 120, 16))
+							.process(function (instance) {
 								var 
 									x, xx,
 									y, yy,
@@ -160,24 +129,27 @@
 										[3, 3, 3, 0, 0, 0, 0, 0, 0],
 										[3, 3, 3, 0, 0, 0, 0, 0, 0],
 										[3, 3, 3, 0, 0, 0, 0, 0, 0]
-									];
+									],
+									expectation;
 								
 								for (y = 0, yy = level.length; y < yy; y += 1) {
 									for (x = 0, xx = level[y].length; x < xx; x += 1) {
+										expectation = expect(instance.search(x * 16, y * 16));
+										
 										if (level[y][x] === 1) {
-											expect(search(x * 16, y * 16)).toBeTruthy();
-											expect(search(x * 16, y * 16)).toEqual({1: true});
+											expectation.toBeTruthy();
+											expectation.toEqual({1: true});
 										
 										} else if (level[y][x] === 2) {
-											expect(search(x * 16, y * 16)).toBeTruthy();
-											expect(search(x * 16, y * 16)).toEqual({2: true});
+											expectation.toBeTruthy();
+											expectation.toEqual({2: true});
 											
 										} else if (level[y][x] === 3) {
-											expect(search(x * 16, y * 16)).toBeTruthy();
-											expect(search(x * 16, y * 16)).toEqual({3: true});
+											expectation.toBeTruthy();
+											expectation.toEqual({3: true});
 										
 										} else {
-											expect(search(x * 16, y * 16)).toBeFalsy();
+											expectation.toBeFalsy();
 										}
 									}
 								}
@@ -192,33 +164,10 @@
 					// Place the vector in the middle of a rasterised section,
 					// so when we rasterise it gives us an even box
 					runner(function ($, done) {
-						$.es().makeEntity()
-							.addTag('player-1')
-							.addComponent('drawable')
-							.addComponent('position', {
-								position: {
-									x: 72, 
-									y: 72
-								},
-								size: 16
-							})
-							.addComponent('moveable');
-						$.es().makeEntity()
-							.addTag('player-2')
-							.addComponent('drawable')
-							.addComponent('position', {
-								position: {
-									x: 88, 
-									y: 88
-								},
-								size: 16
-							})
-							.addComponent('moveable');
-						
 						$.spatial_hasher()
-							.inject($.getTag('player-1'))
-							.inject($.getTag('player-2'))
-							.process(function (search) {
+							.inject(newEntity($, 'player-1', 72, 72, 16))
+							.inject(newEntity($, 'player-2', 88, 88, 16))
+							.process(function (instance) {
 								var 
 									x, xx,
 									y, yy,
@@ -232,21 +181,24 @@
 										[0, 0, 0, 0, 2, 2, 2, 0, 0],
 										[0, 0, 0, 0, 0, 0, 0, 0, 0],
 										[0, 0, 0, 0, 0, 0, 0, 0, 0]
-									];
+									],
+									expectation;
 								
 								for (y = 0, yy = level.length; y < yy; y += 1) {
 									for (x = 0, xx = level[y].length; x < xx; x += 1) {
+										expectation = expect(instance.search(x * 16, y * 16));
+										
 										if (level[y][x] === 1) {
-											expect(search(x * 16, y * 16)).toEqual({1: true});
+											expectation.toEqual({1: true});
 											
 										} else if (level[y][x] === 2) {
-											expect(search(x * 16, y * 16)).toEqual({2: true});
+											expectation.toEqual({2: true});
 										
 										} else if (level[y][x] === 3) {
-											expect(search(x * 16, y * 16)).toEqual({1: true, 2: true});
+											expectation.toEqual({1: true, 2: true});
 											
 										} else {
-											expect(search(x * 16, y * 16)).toBeFalsy();
+											expectation.toBeFalsy();
 										}
 									}
 								}
@@ -270,9 +222,9 @@
 				
 				it('should return an object with an access function to access items in a collection', function () {
 					runner(function ($, done) {
-						$.spatial_hasher().process(function (search) {
-							expect(typeof search).toEqual('function');
-							expect(search(0, 0)).toBeFalsy();
+						$.spatial_hasher().process(function (instance) {
+							expect(typeof instance.search).toEqual('function');
+							expect(instance.search(0, 0)).toBeFalsy();
 							
 							done();
 						});
@@ -285,20 +237,20 @@
 							.inject($('thorny math vector2').factory(0, 0))
 							.inject($('thorny math vector2').factory(16, 0))
 							.inject($('thorny math vector2').factory(0, 16))
-							.process(function (search) {
-								expect(typeof search).toEqual('function');
+							.process(function (instance) {
+								expect(typeof instance.search).toEqual('function');
 								
 								// Use absolute x/y values
-								expect(search(0, 0)).toBeTruthy();
-								expect(search(16, 0)).toBeTruthy();
-								expect(search(0, 16)).toBeTruthy();
-								expect(search(16, 16)).toBeFalsy();
+								expect(instance.search(0, 0)).toBeTruthy();
+								expect(instance.search(16, 0)).toBeTruthy();
+								expect(instance.search(0, 16)).toBeTruthy();
+								expect(instance.search(16, 16)).toBeFalsy();
 								
 								// Use a vector2
-								expect(search($('thorny math vector2').factory(0, 0))).toBeTruthy();
-								expect(search($('thorny math vector2').factory(16, 0))).toBeTruthy();
-								expect(search($('thorny math vector2').factory(0, 16))).toBeTruthy();
-								expect(search($('thorny math vector2').factory(16, 16))).toBeFalsy();
+								expect(instance.search($('thorny math vector2').factory(0, 0))).toBeTruthy();
+								expect(instance.search($('thorny math vector2').factory(16, 0))).toBeTruthy();
+								expect(instance.search($('thorny math vector2').factory(0, 16))).toBeTruthy();
+								expect(instance.search($('thorny math vector2').factory(16, 16))).toBeFalsy();
 								done();
 							});
 					});
@@ -306,7 +258,39 @@
 			});// desc has a process function
 			
 			describe('has a removeEntityFromHashmap function', function () {
-				// TODO
+				it('should remove all references to an entity', function () {
+					runner(function ($, done) {
+						var hasher = $.spatial_hasher()
+							.inject(newEntity($, 'player-1', 24, 24, 16))
+							.inject(newEntity($, 'player-2', 24, 24, 16))
+							.inject(newEntity($, 'player-3', 24, 24, 16))
+							.process(function (instance) {
+								instance
+									.removeEntityFromHashmap($.getTag('player-1'))
+									.removeEntityFromHashmap($.getTag('player-2'));
+								
+								var 
+									x, xx,
+									y, yy,
+									level = [
+										[0, 0, 0],
+										[0, 0, 0],
+										[0, 0, 0]
+									],
+									expectation;
+
+								for (y = 0, yy = level.length; y < yy; y += 1) {
+									for (x = 0, xx = level[y].length; x < xx; x += 1) {
+										expectation = expect(instance.search(x * 16, y * 16));
+
+										expectation.toEqual({1: false, 2: false, 3: true});
+									}
+								}
+								
+								done();
+							});
+					});
+				});// it should remove all references to an entity
 			});// desc has a removeEntityFromHashmap function
 			
 			describe('has a hash function', function () {
@@ -338,7 +322,117 @@
 			});// desc has a hash function
 			
 			describe('has a hashRegion function', function () {
-				// TODO
+				it('should rasterise an entity and the surounding region', function () {
+					// Place the vector in the middle of a rasterised section,
+					// so when we rasterise it gives us an even box
+					runner(function ($, done) {
+						$('thorny spatial-hasher base').setup({size: 16}, true);
+						var 
+							hashmap = {},
+							x, xx,
+							y, yy,
+							level = [
+								[0, 0, 0, 0, 0],
+								[0, 1, 1, 1, 0],
+								[0, 1, 1, 1, 0],
+								[0, 1, 1, 1, 0],
+								[0, 0, 0, 0, 0]
+							],
+							expectation;
+						
+						$.spatial_hasher()
+							.hashRegion(
+								$.es().makeEntity(),
+								hashmap,
+								16,
+								$('thorny math vector2').factory(40, 40)
+								);
+						
+						for (y = 0, yy = level.length; y < yy; y += 1) {
+							for (x = 0, xx = level[y].length; x < xx; x += 1) {
+								expectation = expect(
+									hashmap[$.spatial_hasher().hash(x * 16, y * 16)]
+									);
+								
+								if (level[y][x] === 1) {
+									expectation.toMatch({1: true});
+									
+								} else {
+									expectation.toBeFalsy();
+								}
+							}
+						}
+						
+						done();
+					});// runner
+				});// it should rasterise an entity and the surounding region
+				
+				it('should rasterise multiple entites and there surounding region', function () {
+					// Place the vector in the middle of a rasterised section,
+					// so when we rasterise it gives us an even box
+					runner(function ($, done) {
+						$('thorny spatial-hasher base').setup({size: 16}, true);
+						var 
+							hashmap = {},
+							x, xx,
+							y, yy,
+							level = [
+								[0, 0, 0, 0, 0, 0, 0],
+								[0, 1, 1, 1, 1, 1, 0],
+								[0, 1, 2, 2, 2, 1, 0],
+								[0, 1, 2, 2, 2, 1, 0],
+								[0, 1, 2, 2, 2, 1, 0],
+								[0, 1, 1, 1, 1, 1, 0],
+								[0, 0, 0, 0, 0, 0, 0]
+							],
+							expectation;
+						
+						$.spatial_hasher()
+							.hashRegion(
+								$.es().makeEntity(),
+								hashmap,
+								48,
+								$('thorny math vector2').factory(56, 56)
+								)
+							.hashRegion(
+								$.es().makeEntity(),
+								hashmap,
+								32,
+								$('thorny math vector2').factory(56, 56)
+								)
+							.hashRegion(
+								$.es().makeEntity(),
+								hashmap,
+								16,
+								$('thorny math vector2').factory(56, 56)
+								);
+						
+						for (y = 0, yy = level.length; y < yy; y += 1) {
+							for (x = 0, xx = level[y].length; x < xx; x += 1) {
+								expectation = expect(
+									JSON.stringify(
+										hashmap[$.spatial_hasher().hash(x * 16, y * 16)]
+										)
+									);
+								
+								if (level[y][x] === 0) {
+									expectation.toMatch(JSON.stringify({1: true}));
+									
+								} else if (level[y][x] === 1) {
+									expectation.toMatch(JSON.stringify({1: true, 2: true}));
+								
+								} else if (level[y][x] === 2) {
+									expectation.toMatch(JSON.stringify({1: true, 2: true, 3: true}));
+									
+								} else {
+									expect(false).toBeTruthy();
+								}
+							}
+						}
+						
+						done();
+					});// runner
+				});// it should rasterise multiple entites and there surounding region
 			});// desc has a hashRegion function
 		});// desc has a factory function
 		

@@ -31,50 +31,14 @@
 			 *    .inject($.getTag('player'))
 			 *    .inject($.es().searchByComponents('drawable', 'position', 'collideable'))
 			 *    .inject($.getTag('world'))
-			 *    .process(function (hash) {
+			 *    .process(function (instance) {
+			 *        instance.search(0, 0);
 			 *        $.event().trigger('hashed'. hash);
 			 *    });
 			*/
 			$.registerGlobal('spatial_hasher', function () {
 				return base.factory();
 			});
-			
-			
-			/*
-			.:ideas:.
-			
-			when you execute process it returns a hash of locations for example
-			
-			var hashes = {
-				'0-0': {1: true, 17: true},
-				'6-4': {16: true},
-				...
-			};
-			
-			with each key in the hash containing any items that are within 
-			that spatial hash.
-			
-			this allows other scripts to later scan for any collisions, and
-			handle those.
-			
-			So so sudo code...
-			
-			$.spatial_hasher()
-				.inject($.es().searchByComponents('drawable', 'position', 'collideable'))
-				.inject($.getTag('world'))
-				.process(function (hash) {
-					// Execute the module that is responsible for triggering
-					// collision events.
-					$.collision_detector(
-						$.getTag('world'),
-						$.es().searchByComponents(
-							'position', 
-							'collideable'
-							),
-						hash
-						);
-				});
-			*/
 		});
 		
 		/**
@@ -117,6 +81,38 @@
 				},
 				
 				/**
+				 * Used to expose the hashmap in a way that directly altering
+				 * it wound't break anything.
+				 * @param void
+				 * @return object Containing the hashmap
+				 */
+				getHashmap: function () {
+					return $._.extend({}, hashmap);
+				},
+				
+				/**
+				 * Used to search the hashmap
+				 * @param object|int x Contains the x param or an object
+				 * @param int y Contains the y param
+				 * @return array|false Contains the enteries in the found hash
+				 */
+				search: function (x, y) {
+					if (typeof x === 'object') {
+						y = x.getY();
+						x = x.getX();
+					}
+					
+					// Hash the input
+					var hash = this.hash(x, y);
+					
+					if (hashmap[hash] !== undefined) {
+						return hashmap[hash];
+					}
+					
+					return false;
+				},
+				
+				/**
 				 * Used to inject objects or collections into spatial scene
 				 * @param void
 				 * @return this to allow object chaining
@@ -128,21 +124,23 @@
 						return that;// returns the base object
 					}
 					
-					// 
+					// If an entity is moveable then we need to rasterise the
+					// area in which it moves through.
 					if (item.hasComponent !== undefined &&
 						item.hasComponent('position') &&
 						item.hasComponent('moveable')
 					) {
 						that.hashRegion(item, hashmap);
 					
+					// If an entity has the has the position attribute then
+					// we need to raster the region it enhabits.
 					} else if (
 						item.hasComponent !== undefined &&
 						item.hasComponent('position')
 					) {
-						(function () {
-							// ...
-						}());
-						
+						that.hashRegion(item, hashmap);
+					
+					// Otherwise we need to rasterise a single point.
 					} else {
 						(function () {
 							// Hash the input
@@ -167,61 +165,62 @@
 				 * @return this to allow object chaining
 				 */
 				removeEntityFromHashmap: function (entity) {
+					if (entity.id === undefined) {
+						return this;// returns the base object
+					}
+					
+					var key;
+					for (key in hashmap) {
+						if (hashmap.hasOwnProperty(key) &&
+							hashmap[key][entity.id]
+						) {
+							hashmap[key][entity.id] = false;
+						}
+					}
+					
 					return this;// returns the base object
 				},
 
 				/**
 				 * Used to process the injected objects.
 				 * @param function callback Called once the scene has been processed
-				 * @reutrn void
+				 * @return this to allow object chaining
 				 */
 				process: function (callback) {
 					var that = this;
 					
 					/**
 					 * Used to search the spatial hash map.
-					 * @param int|object x Contains either the x value, or a vector2
-					 * @param int y Contains the y value
+					 * @param object that Contains the current instance of the
+					 * spatial hasher function
 					 * @return object Containing a list of encountered object or false
 					 */
-					callback(function (x, y) {
-						if (typeof x === 'object') {
-							y = x.getY();
-							x = x.getX();
-						}
-						
-						// Hash the input
-						var hash = that.hash(x, y);
-						
-						if (hashmap[hash] !== undefined) {
-							return hashmap[hash];
-						}
-						
-						return false;
-					}, hashmap);
+					callback(that);
+					
+					return that;
 				},
 				
 				/**
 				 * Used to hash a region of the hashmap
 				 * @param object entity Contains the entity being hashed
 				 * @param object hashmap Contains the hashmap
-				 * @param optional object position Contains a vector2
 				 * @param optional int region_size Contains the size of the region being hashed
-				 * @return void
+				 * @param optional object position Contains a vector2
+				 * @return this to allow object chaining
 				 */
-				hashRegion: function (entity, hashmap, position, region_size) {
-					position = (position) ? position : entity.getComponent('position').data.expose();
-					region_size = (region_size) ? region_size : entity.getComponent('moveable').data.expose().getSize();
+				hashRegion: function (entity, hashmap, region_size, position) {
+					position = (position !== undefined) ? position : entity.getComponent('position').data.expose().position;
+					region_size = (region_size !== undefined) ? region_size : entity.getComponent('position').data.expose().getSize();
 					
 					var
 						that = this,
-						hash = that.hash(position.position.getX(), position.position.getY()),
+						hash = this.hash(position.getX(), position.getY()),
 						x, 
 						y, 
-						x_floor   = Math.floor((position.position.getX() - region_size) / options.size), 
-						y_floor   = Math.floor((position.position.getY() - region_size) / options.size),
-						x_seiling = Math.ceil((position.position.getX()  + region_size) / options.size),
-						y_seiling = Math.ceil((position.position.getY()  + region_size) / options.size);
+						x_floor   = Math.floor((position.getX() - region_size) / options.size), 
+						y_floor   = Math.floor((position.getY() - region_size) / options.size),
+						x_seiling = Math.ceil((position.getX()  + region_size) / options.size),
+						y_seiling = Math.ceil((position.getY()  + region_size) / options.size);
 					
 					// Makesure the hash exists
 					if (hashmap[hash] === undefined) {
@@ -243,6 +242,7 @@
 							hashmap[hash][entity.id] = true;
 						}
 					}
+					return this;// returns the base object
 				}
 			};
 		};
