@@ -130,6 +130,15 @@
 						item.hasComponent('position') &&
 						item.hasComponent('moveable')
 					) {
+						/*
+						.:TODO:.
+						Need to write some code to rasterise lines of movement
+						then iterate over the rasterised line, and hash the
+						region around the line.
+						
+						This will give me an hashed representation of an 
+						entity moving though 2d space.
+						*/
 						that.hashRegion(item, hashmap);
 					
 					// If an entity has the has the position attribute then
