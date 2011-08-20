@@ -13,7 +13,8 @@
 		return $._.extend((function () {
 			return {
 				position: {x: 0, y: 0},
-				facing: {x: 0, y: 0}
+				facing: {x: 0, y: 0},
+				size: 16
 			};
 		}()), options);
 	};
@@ -44,7 +45,10 @@
 						options = attachOptions($, options);
 						$.data(module, 'positions')[entity.id] = {
 							position: $('thorny math vector2').factory(options.position.x, options.position.y),
-							facing: $('thorny math vector2').factory(options.facing.x, options.facing.y).normalize()
+							facing: $('thorny math vector2').factory(options.facing.x, options.facing.y).normalize(),
+							getSize: function () {
+								return options.size;
+							}
 						};
 					},
 

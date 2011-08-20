@@ -44,28 +44,33 @@
 						$.es().makeEntity()
 							.addTag('@0-0 100-0')
 							.addComponent('position', {
-								facing: {x: 100, y: 0}
+								facing: {x: 100, y: 0},
+								size: 32
 							});
 						$.es().makeEntity()
 							.addTag('@0-0 0-100')
 							.addComponent('position', {
-								facing: {x: 0, y: 100}
+								facing: {x: 0, y: 100},
+								size: 64
 							});
 						$.es().makeEntity()
 							.addTag('@0-0 50-50')
 							.addComponent('position', {
-								facing: {x: 50, y: 50}
+								facing: {x: 50, y: 50},
+								size: 128
 							});
 						$.es().makeEntity()
 							.addTag('@12-34 0-0')
 							.addComponent('position', {
-								position: {x: 12, y: 34}
+								position: {x: 12, y: 34},
+								size: 256
 							});
 						$.es().makeEntity()
 							.addTag('@-10-10 -50-50')
 							.addComponent('position', {
 								position: {x: -10, y: 10},
-								facing: {x: -50, y: 50}
+								facing: {x: -50, y: 50},
+								size: 512
 							});
 						
 						var 
@@ -80,36 +85,48 @@
 							.toEqual([75, 50]);
 						expect(data[$.getTag('@75-50 0-0').id].facing.getSimpleCoords())
 							.toEqual([0, 0]);
+						expect(data[$.getTag('@75-50 0-0').id].getSize())
+							.toEqual(16);
 							
 						// @0-0 100-0
 						expect(data[$.getTag('@0-0 100-0').id].position.getSimpleCoords())
 							.toEqual([0, 0]);
 						expect(data[$.getTag('@0-0 100-0').id].facing.getSimpleCoords())
 							.toEqual([1, 0]);
+						expect(data[$.getTag('@0-0 100-0').id].getSize())
+							.toEqual(32);
 							
 						// @0-0 0-100
 						expect(data[$.getTag('@0-0 0-100').id].position.getSimpleCoords())
 							.toEqual([0, 0]);
 						expect(data[$.getTag('@0-0 0-100').id].facing.getSimpleCoords())
 							.toEqual([0, 1]);
+						expect(data[$.getTag('@0-0 0-100').id].getSize())
+							.toEqual(64);
 						
 						// @0-0 50-50
 						expect(data[$.getTag('@0-0 50-50').id].position.getSimpleCoords())
 							.toEqual([0, 0]);
 						expect(data[$.getTag('@0-0 50-50').id].facing.getSimpleCoords())
 							.toEqual([0.7071067811865476, 0.7071067811865476]);
+						expect(data[$.getTag('@0-0 50-50').id].getSize())
+							.toEqual(128);
 						
 						// @12-34 0-0
 						expect(data[$.getTag('@12-34 0-0').id].position.getSimpleCoords())
 							.toEqual([12, 34]);
 						expect(data[$.getTag('@12-34 0-0').id].facing.getSimpleCoords())
 							.toEqual([0, 0]);
+						expect(data[$.getTag('@12-34 0-0').id].getSize())
+							.toEqual(256);
 						
 						// @-10-10 -50-50
 						expect(data[$.getTag('@-10-10 -50-50').id].position.getSimpleCoords())
 							.toEqual([-10, 10]);
 						expect(data[$.getTag('@-10-10 -50-50').id].facing.getSimpleCoords())
 							.toEqual([-0.7071067811865476, 0.7071067811865476]);
+						expect(data[$.getTag('@-10-10 -50-50').id].getSize())
+							.toEqual(512);
 						
 						ran = true;
 					});//instanceof thorny
