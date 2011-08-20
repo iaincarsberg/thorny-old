@@ -125,7 +125,7 @@
 					var that = this;
 					
 					if (item === undefined) {
-						return this;
+						return that;// returns the base object
 					}
 					
 					// 
@@ -133,39 +133,7 @@
 						item.hasComponent('position') &&
 						item.hasComponent('moveable')
 					) {
-						(function () {
-							var
-								position = item.getComponent('position').data.expose(),
-								moveable = item.getComponent('moveable').data.expose(),
-								hash = that.hash(position.position.getX(), position.position.getY()),
-								x, 
-								y, 
-								x_floor = Math.floor((position.position.getX() - moveable.size) / options.size), 
-								y_floor = Math.floor((position.position.getY() - moveable.size) / options.size),
-								x_seiling = Math.ceil((position.position.getX() + moveable.size) / options.size),
-								y_seiling = Math.ceil((position.position.getY() + moveable.size) / options.size);
-							
-							// Makesure the hash exists
-							if (hashmap[hash] === undefined) {
-								hashmap[hash] = {};
-							}
-							
-							for (y = y_floor; y < y_seiling; y += 1) {
-								for (x = x_floor; x < x_seiling; x += 1) {
-									hash = that.hash(
-										x * options.size,
-										y * options.size
-										);
-
-									// Makesure the hash exists
-									if (hashmap[hash] === undefined) {
-										hashmap[hash] = {};
-									}
-
-									hashmap[hash][item.id] = true;
-								}
-							}
-						}());
+						that.hashRegion(item, hashmap);
 					
 					} else if (
 						item.hasComponent !== undefined &&
@@ -189,6 +157,16 @@
 						}());
 					}
 					
+					return that;// returns the base object
+				},
+				
+				/**
+				 * Used to remove all instances of an entity from the hashmap
+				 * @param object entity Contains an entity we're clearing out
+				 * of the hashmap.
+				 * @return this to allow object chaining
+				 */
+				removeEntityFromHashmap: function (entity) {
 					return this;// returns the base object
 				},
 
@@ -220,7 +198,51 @@
 						}
 						
 						return false;
-					});
+					}, hashmap);
+				},
+				
+				/**
+				 * Used to hash a region of the hashmap
+				 * @param object entity Contains the entity being hashed
+				 * @param object hashmap Contains the hashmap
+				 * @param optional object position Contains a vector2
+				 * @param optional int region_size Contains the size of the region being hashed
+				 * @return void
+				 */
+				hashRegion: function (entity, hashmap, position, region_size) {
+					position = (position) ? position : entity.getComponent('position').data.expose();
+					region_size = (region_size) ? region_size : entity.getComponent('moveable').data.expose().getSize();
+					
+					var
+						that = this,
+						hash = that.hash(position.position.getX(), position.position.getY()),
+						x, 
+						y, 
+						x_floor   = Math.floor((position.position.getX() - region_size) / options.size), 
+						y_floor   = Math.floor((position.position.getY() - region_size) / options.size),
+						x_seiling = Math.ceil((position.position.getX()  + region_size) / options.size),
+						y_seiling = Math.ceil((position.position.getY()  + region_size) / options.size);
+					
+					// Makesure the hash exists
+					if (hashmap[hash] === undefined) {
+						hashmap[hash] = {};
+					}
+					
+					for (y = y_floor; y < y_seiling; y += 1) {
+						for (x = x_floor; x < x_seiling; x += 1) {
+							hash = that.hash(
+								x * options.size,
+								y * options.size
+								);
+
+							// Makesure the hash exists
+							if (hashmap[hash] === undefined) {
+								hashmap[hash] = {};
+							}
+
+							hashmap[hash][entity.id] = true;
+						}
+					}
 				}
 			};
 		};

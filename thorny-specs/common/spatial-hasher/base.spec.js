@@ -18,11 +18,17 @@
 				expect(typeof spatial.factory()).toEqual('object');
 				expect(typeof spatial.factory().inject).toEqual('function');
 				expect(typeof spatial.factory().process).toEqual('function');
+				expect(typeof spatial.factory().removeEntityFromHashmap).toEqual('function');
+				expect(typeof spatial.factory().hash).toEqual('function');
+				expect(typeof spatial.factory().hashRegion).toEqual('function');
 				
 				// Test Global version
 				expect(typeof $.spatial_hasher()).toEqual('object');
 				expect(typeof $.spatial_hasher().inject).toEqual('function');
 				expect(typeof $.spatial_hasher().process).toEqual('function');
+				expect(typeof $.spatial_hasher().removeEntityFromHashmap).toEqual('function');
+				expect(typeof $.spatial_hasher().hash).toEqual('function');
+				expect(typeof $.spatial_hasher().hashRegion).toEqual('function');
 				done();
 			});// runner
 		});// it should have the following functions
@@ -58,11 +64,10 @@
 								position: {
 									x: 72, 
 									y: 72
-								}
-							})
-							.addComponent('moveable', {
+								},
 								size: 48
-							});
+							})
+							.addComponent('moveable');
 						
 						$.spatial_hasher()
 							.inject($.getTag('player'))
@@ -108,11 +113,10 @@
 								position: {
 									x: 24, 
 									y: 24
-								}
-							})
-							.addComponent('moveable', {
+								},
 								size: 16
-							});
+							})
+							.addComponent('moveable');
 							
 						$.es().makeEntity()
 							.addTag('player_2')
@@ -121,11 +125,10 @@
 								position: {
 									x: 72, 
 									y: 72
-								}
-							})
-							.addComponent('moveable', {
+								},
 								size: 16
-							});
+							})
+							.addComponent('moveable');
 							
 						$.es().makeEntity()
 							.addTag('player_3')
@@ -134,11 +137,10 @@
 								position: {
 									x: 24, 
 									y: 120
-								}
-							})
-							.addComponent('moveable', {
+								},
 								size: 16
-							});
+							})
+							.addComponent('moveable');
 						
 						$.spatial_hasher()
 								.inject($.getTag('player_1'))
@@ -184,6 +186,75 @@
 							});
 					});
 				});// it should rasterise multiple simple shapes into the hashmap
+				
+				
+				it('should rasterise overlapping shapes into the hashmap', function () {
+					// Place the vector in the middle of a rasterised section,
+					// so when we rasterise it gives us an even box
+					runner(function ($, done) {
+						$.es().makeEntity()
+							.addTag('player-1')
+							.addComponent('drawable')
+							.addComponent('position', {
+								position: {
+									x: 72, 
+									y: 72
+								},
+								size: 16
+							})
+							.addComponent('moveable');
+						$.es().makeEntity()
+							.addTag('player-2')
+							.addComponent('drawable')
+							.addComponent('position', {
+								position: {
+									x: 88, 
+									y: 88
+								},
+								size: 16
+							})
+							.addComponent('moveable');
+						
+						$.spatial_hasher()
+							.inject($.getTag('player-1'))
+							.inject($.getTag('player-2'))
+							.process(function (search) {
+								var 
+									x, xx,
+									y, yy,
+									level = [
+										[0, 0, 0, 0, 0, 0, 0, 0, 0],
+										[0, 0, 0, 0, 0, 0, 0, 0, 0],
+										[0, 0, 0, 0, 0, 0, 0, 0, 0],
+										[0, 0, 0, 1, 1, 1, 0, 0, 0],
+										[0, 0, 0, 1, 3, 3, 2, 0, 0],
+										[0, 0, 0, 1, 3, 3, 2, 0, 0],
+										[0, 0, 0, 0, 2, 2, 2, 0, 0],
+										[0, 0, 0, 0, 0, 0, 0, 0, 0],
+										[0, 0, 0, 0, 0, 0, 0, 0, 0]
+									];
+								
+								for (y = 0, yy = level.length; y < yy; y += 1) {
+									for (x = 0, xx = level[y].length; x < xx; x += 1) {
+										if (level[y][x] === 1) {
+											expect(search(x * 16, y * 16)).toEqual({1: true});
+											
+										} else if (level[y][x] === 2) {
+											expect(search(x * 16, y * 16)).toEqual({2: true});
+										
+										} else if (level[y][x] === 3) {
+											expect(search(x * 16, y * 16)).toEqual({1: true, 2: true});
+											
+										} else {
+											expect(search(x * 16, y * 16)).toBeFalsy();
+										}
+									}
+								}
+								
+								done();
+							});
+					});
+				});// it should rasterise overlapping shapes into the hashmap
 			});// desc has a inject function
 
 			describe('has a process function', function () {
@@ -231,14 +302,50 @@
 								done();
 							});
 					});
-				});// it should
+				});// it should mark spatial regions as populated
 			});// desc has a process function
+			
+			describe('has a removeEntityFromHashmap function', function () {
+				// TODO
+			});// desc has a removeEntityFromHashmap function
+			
+			describe('has a hash function', function () {
+				it('should hash a vector2 based on the set size', function () {
+					runner(function ($, done) {
+						// Hash using size 16
+						$('thorny spatial-hasher base').setup({size: 16}, true);
+						expect($.spatial_hasher().hash(0, 0)).toEqual('0=0');
+						expect($.spatial_hasher().hash(15, 15)).toEqual('0=0');
+						expect($.spatial_hasher().hash(16, 15)).toEqual('1=0');
+						expect($.spatial_hasher().hash(45, 33)).toEqual('2=2');
+						expect($.spatial_hasher().hash(65, 545)).toEqual('4=34');
+						expect($.spatial_hasher().hash(4, 35)).toEqual('0=2');
+						expect($.spatial_hasher().hash(433, 65)).toEqual('27=4');
+						
+						// Hash using size 32
+						$('thorny spatial-hasher base').setup({size: 32}, true);
+						expect($.spatial_hasher().hash(0, 0)).toEqual('0=0');
+						expect($.spatial_hasher().hash(15, 15)).toEqual('0=0');
+						expect($.spatial_hasher().hash(16, 15)).toEqual('0=0');
+						expect($.spatial_hasher().hash(45, 33)).toEqual('1=1');
+						expect($.spatial_hasher().hash(65, 545)).toEqual('2=17');
+						expect($.spatial_hasher().hash(4, 35)).toEqual('0=1');
+						expect($.spatial_hasher().hash(433, 65)).toEqual('13=2');
+						
+						done();
+					});
+				});// it should hash a vector2 based on the set size
+			});// desc has a hash function
+			
+			describe('has a hashRegion function', function () {
+				// TODO
+			});// desc has a hashRegion function
 		});// desc has a factory function
 		
 		describe('has an options function', function () {
 			it('should return the defaults correctly', function () {
 				runner(function ($, done) {
-					var options = $('thorny spatial-hasher base').setup({}, true);
+					var options = $('thorny spatial-hasher base').setup({size: 16}, true);
 					
 					expect(options.size).toEqual(16);
 					done();
