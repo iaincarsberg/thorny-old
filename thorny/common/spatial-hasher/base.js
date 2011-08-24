@@ -1,4 +1,4 @@
-/*global window*/
+/*global window console*/
 (function (module) {
 	// Contains the global value, means we can set the size once, and it will
 	// persist.
@@ -78,7 +78,7 @@
 					return Math.floor(x / options.size) + 
 						'=' + 
 						Math.floor(y / options.size);
-				},
+				},//hash
 				
 				/**
 				 * Used to expose the hashmap in a way that directly altering
@@ -88,7 +88,7 @@
 				 */
 				getHashmap: function () {
 					return $._.extend({}, hashmap);
-				},
+				},//getHashmap
 				
 				/**
 				 * Used to search the hashmap
@@ -110,7 +110,7 @@
 					}
 					
 					return false;
-				},
+				},//search
 				
 				/**
 				 * Used to inject objects or collections into spatial scene
@@ -130,6 +130,15 @@
 						item.hasComponent('position') &&
 						item.hasComponent('moveable')
 					) {
+						console.log(
+							that.rayTraceLine(
+								item, 
+								hashmap,
+								$('thorny math vector2').factory(0, 0),
+								$('thorny math vector2').factory(10, 2)
+								)
+							);
+						
 						/*
 						.:TODO:.
 						Need to write some code to rasterise lines of movement
@@ -165,7 +174,7 @@
 					}
 					
 					return that;// returns the base object
-				},
+				},//inject
 				
 				/**
 				 * Used to remove all instances of an entity from the hashmap
@@ -188,7 +197,7 @@
 					}
 					
 					return this;// returns the base object
-				},
+				},//removeEntityFromHashmap
 
 				/**
 				 * Used to process the injected objects.
@@ -207,7 +216,7 @@
 					callback(that);
 					
 					return that;
-				},
+				},//process
 				
 				/**
 				 * Used to hash a region of the hashmap
@@ -252,7 +261,63 @@
 						}
 					}
 					return this;// returns the base object
-				}
+				},//hashRegion
+				
+				/**
+				 * Used to trace a line through hashed space
+				 * @param object entity Contains the entity that is moving 
+				 * through 2d space.
+				 * @param object hashmap Contains the hashmap we're tracing a
+				 * vector of movement though
+				 * @param object start Contains a vector2 defining the start 
+				 * of the movement vector
+				 * @param object end Contains a vector2 defining the end of 
+				 * the movement vector
+				 * @return array Containg vectors we travelled through
+				 */
+				rayTraceLine: function (entity, hashmap, start, end) {
+					// setup phase
+					var
+						x     = start.getX(),
+						y     = start.getY(),
+						endX  = end.getX(),
+						endY  = end.getY(),
+						stepX = ((x > endX) ? -1 : 1),
+						stepY = ((y > endY) ? -1 : 1),
+						tMaxX,
+						tMaxY;
+					
+					// loop phase
+					//var
+					//	tX = Math.floor(start.getX() / options.size),
+					//	tY = Math.floor(start.getY() / options.size);
+					
+					while (true) {
+						if (tMaxX < tMaxY) {
+							tMaxX += options.size;
+							x += stepX;
+							
+						} else {
+							tMaxY += options.size;
+							y += stepY;
+						}
+						console.log(x, y);
+						break;
+					}
+					
+					/*
+					loop {
+						if(	tMaxX < tMaxY) {
+							tMaxX= tMaxX + tDeltaX;
+							X= X + stepX;
+						} else {
+							tMaxY= tMaxY + tDeltaY;
+							Y= Y + stepY;
+						}
+						NextVoxel(X,Y);
+					}
+					*/
+				}//rayTraceLine
 			};
 		};
 		

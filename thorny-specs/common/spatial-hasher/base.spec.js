@@ -4,8 +4,12 @@
 	
 	var
 		runner = require('thorny-specs/test-runner'),
-		newEntity = function ($, name, x, y, size) {
-			return $.es().makeEntity()
+		newEntity = function ($, name, x, y, size, isMoveable) {
+			if (isMoveable === undefined) {
+				isMoveable = false;
+			}
+			
+			var entity = $.es().makeEntity()
 				.addTag(name)
 				.addComponent('drawable')
 				.addComponent('position', {
@@ -14,8 +18,13 @@
 						y: y
 					},
 					size: size
-				})
-				.addComponent('moveable');
+				});
+			
+			if (isMoveable) {
+				entity.addComponent('moveable');
+			}
+			
+			return entity;
 		};
 	
 	describe('the spatial-hasher module', function () {
