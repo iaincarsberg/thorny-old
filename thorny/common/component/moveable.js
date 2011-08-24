@@ -15,7 +15,7 @@
 				return {
 					user_facing: {x: 0, y: 0},
 					speed: 1,
-					easing: 'linear',// TODO
+					easing: 'linear'// TODO
 				};
 			}()), options);
 		},

@@ -213,7 +213,7 @@
 						interpolation = 0;
 					}
 				};
-			},// factory
+			}//, factory
 		};
 	};
 }((typeof window === 'undefined') ? module : window.thorny_path('./thorny/browser/core/game-loop')));

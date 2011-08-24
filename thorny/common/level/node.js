@@ -96,7 +96,7 @@
 				}
 				
 				return id;
-			},
+			}
 		};
 	};
 }((typeof window === 'undefined') ? module : window.thorny_path('./thorny/common/level/node')));

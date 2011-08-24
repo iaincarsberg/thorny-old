@@ -214,7 +214,7 @@
 					distance: distance,
 					insideProjection: insideProjection
 				};
-			},//findDistanceFromLineSegment
+			}//,findDistanceFromLineSegment
 		};
 		
 		return raw_poly2;
