@@ -4,12 +4,13 @@
 	
 	var
 		runner = require('thorny-specs/test-runner'),
-		newEntity = function ($, name, x, y, size, isMoveable) {
+		newEntity = function ($, name, x, y, size, isMoveable, old_x, old_y) {
 			if (isMoveable === undefined) {
 				isMoveable = false;
 			}
 			
-			var entity = $.es().makeEntity()
+			var 
+				entity = $.es().makeEntity()
 				.addTag(name)
 				.addComponent('drawable')
 				.addComponent('position', {
@@ -18,10 +19,36 @@
 						y: y
 					},
 					size: size
-				});
+				}),
+				v2,
+				target,
+				speed;
 			
+			// If we're dealing with a movable item, then move towards it.
 			if (isMoveable) {
-				entity.addComponent('moveable');
+				$.time().tick();
+				
+				v2 = $('thorny math vector2');
+				target = v2.factory(old_x, old_y);
+				speed = v2.factory(x, y).distance(target);
+				
+				entity.addComponent('moveable', {speed: speed});
+				
+				entity.getComponent('moveable').data.inject(entity, function (data) {
+					data.direction = v2.factory(x, y).rotateToFace(target);
+					
+					return data;
+				});
+				
+				entity.executeComponent('moveable', {
+					time: $.time().now() + 1000
+				});
+			}
+			
+			// If the entity is moveable then we need to move the entity over
+			// to the new location.
+			if (isMoveable) {
+				
 			}
 			
 			return entity;
@@ -44,6 +71,7 @@
 				expect(typeof spatial.factory().removeEntityFromHashmap).toEqual('function');
 				expect(typeof spatial.factory().hash).toEqual('function');
 				expect(typeof spatial.factory().hashRegion).toEqual('function');
+				expect(typeof spatial.factory().rayTraceLine).toEqual('function');
 				
 				// Test Global version
 				expect(typeof $.spatial_hasher()).toEqual('object');
@@ -52,6 +80,7 @@
 				expect(typeof $.spatial_hasher().removeEntityFromHashmap).toEqual('function');
 				expect(typeof $.spatial_hasher().hash).toEqual('function');
 				expect(typeof $.spatial_hasher().hashRegion).toEqual('function');
+				expect(typeof $.spatial_hasher().rayTraceLine).toEqual('function');
 				done();
 			});// runner
 		});// it should have the following functions
@@ -101,14 +130,13 @@
 								
 								for (y = 0, yy = level.length; y < yy; y += 1) {
 									for (x = 0, xx = level[y].length; x < xx; x += 1) {
-										expectation = expect(instance.search(x * 16, y * 16));
+										expectation = expect(JSON.stringify(instance.search(x * 16, y * 16)));
 										
 										if (level[y][x] === 1) {
-											expectation.toBeTruthy();
-											expectation.toEqual({1: true});
+											expectation.toEqual('{"1":true}');
 											
 										} else {
-											expectation.toBeFalsy();
+											expectation.toEqual('{}');
 										}
 									}
 								}
@@ -143,22 +171,22 @@
 								
 								for (y = 0, yy = level.length; y < yy; y += 1) {
 									for (x = 0, xx = level[y].length; x < xx; x += 1) {
-										expectation = expect(instance.search(x * 16, y * 16));
+										expectation = expect(JSON.stringify(instance.search(x * 16, y * 16)));
 										
 										if (level[y][x] === 1) {
 											expectation.toBeTruthy();
-											expectation.toEqual({1: true});
+											expectation.toEqual('{"1":true}');
 										
 										} else if (level[y][x] === 2) {
 											expectation.toBeTruthy();
-											expectation.toEqual({2: true});
+											expectation.toEqual('{"2":true}');
 											
 										} else if (level[y][x] === 3) {
 											expectation.toBeTruthy();
-											expectation.toEqual({3: true});
+											expectation.toEqual('{"3":true}');
 										
 										} else {
-											expectation.toBeFalsy();
+											expectation.toEqual('{}');
 										}
 									}
 								}
@@ -195,19 +223,19 @@
 								
 								for (y = 0, yy = level.length; y < yy; y += 1) {
 									for (x = 0, xx = level[y].length; x < xx; x += 1) {
-										expectation = expect(instance.search(x * 16, y * 16));
+										expectation = expect(JSON.stringify(instance.search(x * 16, y * 16)));
 										
 										if (level[y][x] === 1) {
-											expectation.toEqual({1: true});
+											expectation.toEqual('{"1":true}');
 											
 										} else if (level[y][x] === 2) {
-											expectation.toEqual({2: true});
+											expectation.toEqual('{"2":true}');
 										
 										} else if (level[y][x] === 3) {
-											expectation.toEqual({1: true, 2: true});
+											expectation.toEqual('{"1":true,"2":true}');
 											
 										} else {
-											expectation.toBeFalsy();
+											expectation.toEqual('{}');
 										}
 									}
 								}
@@ -216,6 +244,94 @@
 							});
 					});
 				});// it should rasterise overlapping shapes into the hashmap
+				
+				describe('that is able to rasterise moveing entities', function () {
+					it('should rasterise the area of movement for a moving entity', function () {
+						runner(function ($, done) {
+							$('thorny spatial-hasher base').setup({size: 16});
+							
+							$.spatial_hasher()
+								.inject(newEntity($, 'player', 24, 24, 16, true, 100, 100))
+								.process(function (instance) {
+									var 
+										x, xx,
+										y, yy,
+										level = [
+											[1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
+											[1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+											[1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+											[0, 1, 1, 1, 1, 1, 1, 0, 0, 0],
+											[0, 0, 1, 1, 1, 1, 1, 1, 0, 0],
+											[0, 0, 0, 1, 1, 1, 1, 1, 0, 0],
+											[0, 0, 0, 0, 1, 1, 1, 1, 0, 0],
+											[0, 0, 0, 0, 0, 1, 1, 1, 0, 0],
+											[0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+											[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+										],
+										
+										expectation;
+
+									for (y = 0, yy = level.length; y < yy; y += 1) {
+										for (x = 0, xx = level[y].length; x < xx; x += 1) {
+											expectation = expect(JSON.stringify(instance.search(x * 16, y * 16)));
+
+											if (level[y][x] === 1) {
+												expectation.toEqual('{"1":true}');
+												
+											} else {
+												expectation.toEqual('{}');
+											}
+										}
+									}
+									
+									done();
+								});
+						});
+					});// it should rasterise the area of movement for a moveing entity
+					
+					it('should rasterise the area of movement for a moving entity that moves horazintally', function () {
+						runner(function ($, done) {
+							$('thorny spatial-hasher base').setup({size: 16});
+							
+							$.spatial_hasher()
+								.inject(newEntity($, 'player', 50, 24, 16, true, 50, 100))
+								.process(function (instance) {
+									var 
+										x, xx,
+										y, yy,
+										level = [
+											[0, 0, 1, 1, 1, 0, 0],
+											[0, 0, 1, 1, 1, 0, 0],
+											[0, 0, 1, 1, 1, 0, 0],
+											[0, 0, 1, 1, 1, 0, 0],
+											[0, 0, 1, 1, 1, 0, 0],
+											[0, 0, 1, 1, 1, 0, 0],
+											[0, 0, 1, 1, 1, 0, 0],
+											[0, 0, 1, 1, 1, 0, 0],
+											[0, 0, 0, 0, 0, 0, 0],
+											[0, 0, 0, 0, 0, 0, 0]
+										],
+										
+										expectation;
+
+									for (y = 0, yy = level.length; y < yy; y += 1) {
+										for (x = 0, xx = level[y].length; x < xx; x += 1) {
+											expectation = expect(JSON.stringify(instance.search(x * 16, y * 16)));
+
+											if (level[y][x] === 1) {
+												expectation.toEqual('{"1":true}');
+												
+											} else {
+												expectation.toEqual('{}');
+											}
+										}
+									}
+									
+									done();
+								});
+						});
+					});// it should rasterise the area of movement for a moving entity that moves horazintally
+				});// desc that is able to rasterise moving entities
 			});// desc has a inject function
 
 			describe('has a process function', function () {
@@ -233,7 +349,7 @@
 					runner(function ($, done) {
 						$.spatial_hasher().process(function (instance) {
 							expect(typeof instance.search).toEqual('function');
-							expect(instance.search(0, 0)).toBeFalsy();
+							expect(JSON.stringify(instance.search(0, 0))).toEqual('{}');
 							
 							done();
 						});
@@ -253,13 +369,13 @@
 								expect(instance.search(0, 0)).toBeTruthy();
 								expect(instance.search(16, 0)).toBeTruthy();
 								expect(instance.search(0, 16)).toBeTruthy();
-								expect(instance.search(16, 16)).toBeFalsy();
+								expect(JSON.stringify(instance.search(16, 16))).toEqual('{}');
 								
 								// Use a vector2
 								expect(instance.search($('thorny math vector2').factory(0, 0))).toBeTruthy();
 								expect(instance.search($('thorny math vector2').factory(16, 0))).toBeTruthy();
 								expect(instance.search($('thorny math vector2').factory(0, 16))).toBeTruthy();
-								expect(instance.search($('thorny math vector2').factory(16, 16))).toBeFalsy();
+								expect(JSON.stringify(instance.search($('thorny math vector2').factory(16, 16)))).toEqual('{}');
 								done();
 							});
 					});
@@ -425,13 +541,13 @@
 									);
 								
 								if (level[y][x] === 0) {
-									expectation.toMatch(JSON.stringify({1: true}));
+									expectation.toMatch('{"1":true}');
 									
 								} else if (level[y][x] === 1) {
-									expectation.toMatch(JSON.stringify({1: true, 2: true}));
+									expectation.toMatch('{"1":true,"2":true}');
 								
 								} else if (level[y][x] === 2) {
-									expectation.toMatch(JSON.stringify({1: true, 2: true, 3: true}));
+									expectation.toMatch('{"1":true,"2":true,"3":true}');
 									
 								} else {
 									expect(false).toBeTruthy();
@@ -443,6 +559,138 @@
 					});// runner
 				});// it should rasterise multiple entites and there surounding region
 			});// desc has a hashRegion function
+			
+			describe('has a rayTraceLine function', function () {
+				it('should rasterise a line in 2d space', function () {
+					runner(function ($, done) {
+						$('thorny spatial-hasher base').setup({size: 16}, true);
+						
+						var 
+							hashmap = {},
+							path = $.spatial_hasher()
+								.rayTraceLine(
+									$.es().makeEntity(),
+									hashmap,
+									$('thorny math vector2').factory(0, 0),
+									$('thorny math vector2').factory(320, 48)
+									),
+							key,
+							i, ii, 
+							simplePath = [],
+							usedHashes = 0;
+						
+						for (key in hashmap) {
+							if (hashmap.hasOwnProperty(key)) {
+								usedHashes += 1;
+							}
+						}
+						
+						expect(usedHashes).toEqual(24);
+						expect(JSON.stringify(hashmap['0=0'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['1=0'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['2=0'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['3=0'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['4=0'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['4=1'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['5=1'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['6=1'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['7=1'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['8=1'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['9=1'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['10=1'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['11=1'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['11=2'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['12=2'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['13=2'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['14=2'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['15=2'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['16=2'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['17=2'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['17=3'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['18=3'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['19=3'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['20=3'])).toEqual('{"1":true}');
+						
+						// Extract the physical coords from the path of vector2s
+						for (i = 0, ii = path.length; i < ii; i += 1) {
+							simplePath.push(
+								path[i].getSimpleCoords()
+								);
+						}
+						
+						expect(simplePath.length).toEqual(24);
+						expect(JSON.stringify(simplePath)).toEqual('[[0,0],[1,0],[2,0],[3,0],[4,0],[4,1],[5,1],[6,1],[7,1],[8,1],[9,1],[10,1],[11,1],[11,2],[12,2],[13,2],[14,2],[15,2],[16,2],[17,2],[17,3],[18,3],[19,3],[20,3]]');
+						
+						done();
+						
+					});// runner
+				});// it should rasterise a line in 2d space
+				
+				it('should rasterise a second line in 2d space', function () {
+					runner(function ($, done) {
+						$('thorny spatial-hasher base').setup({size: 16}, true);
+						
+						var 
+							hashmap = {},
+							path = $.spatial_hasher()
+								.rayTraceLine(
+									$.es().makeEntity(),
+									hashmap,
+									$('thorny math vector2').factory(320, 48),
+									$('thorny math vector2').factory(0, 0)
+									),
+							key,
+							i, ii, 
+							simplePath = [],
+							usedHashes = 0;
+						
+						for (key in hashmap) {
+							if (hashmap.hasOwnProperty(key)) {
+								usedHashes += 1;
+							}
+						}
+						
+						expect(usedHashes).toEqual(24);
+						expect(JSON.stringify(hashmap['0=0'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['1=0'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['2=0'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['3=0'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['3=1'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['4=1'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['5=1'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['6=1'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['7=1'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['8=1'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['9=1'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['9=2'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['10=2'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['11=2'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['12=2'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['13=2'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['14=2'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['15=2'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['16=2'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['16=3'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['17=3'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['18=3'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['19=3'])).toEqual('{"1":true}');
+						expect(JSON.stringify(hashmap['20=3'])).toEqual('{"1":true}');
+						
+						// Extract the physical coords from the path of vector2s
+						for (i = 0, ii = path.length; i < ii; i += 1) {
+							simplePath.push(
+								path[i].getSimpleCoords()
+								);
+						}
+						
+						expect(simplePath.length).toEqual(24);
+						expect(JSON.stringify(simplePath)).toEqual('[[20,3],[19,3],[18,3],[17,3],[16,3],[16,2],[15,2],[14,2],[13,2],[12,2],[11,2],[10,2],[9,2],[9,1],[8,1],[7,1],[6,1],[5,1],[4,1],[3,1],[3,0],[2,0],[1,0],[0,0]]');
+						
+						done();
+						
+					});// runner
+				});// it should rasterise a second line in 2d space
+			});// desc has a rayTraceLine function
 		});// desc has a factory function
 		
 		describe('has an options function', function () {

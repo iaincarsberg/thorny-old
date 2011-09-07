@@ -109,7 +109,7 @@
 						return hashmap[hash];
 					}
 					
-					return false;
+					return {};
 				},//search
 				
 				/**
@@ -118,7 +118,7 @@
 				 * @return this to allow object chaining
 				 */
 				inject: function (item) {
-					var that = this;
+					var that = this, route, i, size;
 					
 					if (item === undefined) {
 						return that;// returns the base object
@@ -130,25 +130,27 @@
 						item.hasComponent('position') &&
 						item.hasComponent('moveable')
 					) {
-						console.log(
-							that.rayTraceLine(
-								item, 
-								hashmap,
-								$('thorny math vector2').factory(0, 0),
-								$('thorny math vector2').factory(10, 2)
-								)
+						// Plot the actors movement.
+						route = that.rayTraceLine(
+							item, 
+							hashmap,
+							item.getComponent('moveable').data.expose().position_last,
+							item.getComponent('moveable').data.expose().position
 							);
 						
-						/*
-						.:TODO:.
-						Need to write some code to rasterise lines of movement
-						then iterate over the rasterised line, and hash the
-						region around the line.
+						size = item.getComponent('moveable').data.expose().getSize();
 						
-						This will give me an hashed representation of an 
-						entity moving though 2d space.
-						*/
-						that.hashRegion(item, hashmap);
+						// Iterate over the route, and hash the region 
+						// surounding each point.
+						for (i = 0; i < route.length; i += 1) {
+							that.hashRegion(
+								item, 
+								hashmap, 
+								size, 
+								route[i],
+								true
+								);
+						}
 					
 					// If an entity has the has the position attribute then
 					// we need to raster the region it enhabits.
@@ -219,14 +221,47 @@
 				},//process
 				
 				/**
+				 * Marks an entity as being in a specific hash
+				 * @param object entity Contains the entity being stored
+				 * @param string hash Contains a hash
+				 * @param object hashmap Contains the hashmap
+				 * @return void
+				 */
+				putEntityIntoHashmap: function (entity, hash, hashmap) {
+					// Makesure the hash is valid
+					if (entity === undefined || entity.id === undefined) {
+						return;
+					}
+					
+					// Makesure the hash exists
+					if (hashmap[hash] === undefined) {
+						hashmap[hash] = {};
+					}
+					
+					// If the entity isn't set, or is false we want to return 
+					// true, so that when appending the traced route we dont
+					// append duplicate enteries.
+					if (hashmap[hash][entity.id] === undefined ||
+						! hashmap[hash][entity.id]
+					) {
+						hashmap[hash][entity.id] = true;
+						return true;
+					}
+					return false;
+				},
+				
+				/**
 				 * Used to hash a region of the hashmap
 				 * @param object entity Contains the entity being hashed
 				 * @param object hashmap Contains the hashmap
-				 * @param optional int region_size Contains the size of the region being hashed
+				 * @param optional int region_size Contains the size of the 
+				 * region being hashed
 				 * @param optional object position Contains a vector2
+				 * @param optional boolean preScaled True if the position has
+				 * already been scaled by the {options.size} value.
 				 * @return this to allow object chaining
 				 */
-				hashRegion: function (entity, hashmap, region_size, position) {
+				hashRegion: function (entity, hashmap, region_size, position, preScaled) {
 					position = (position !== undefined) ? position : entity.getComponent('position').data.expose().position;
 					region_size = (region_size !== undefined) ? region_size : entity.getComponent('position').data.expose().getSize();
 					
@@ -235,10 +270,25 @@
 						hash = this.hash(position.getX(), position.getY()),
 						x, 
 						y, 
-						x_floor   = Math.floor((position.getX() - region_size) / options.size), 
-						y_floor   = Math.floor((position.getY() - region_size) / options.size),
-						x_seiling = Math.ceil((position.getX()  + region_size) / options.size),
+						x_floor, 
+						y_floor,
+						x_seiling,
+						y_seiling;
+					
+					if (preScaled) {
+						region_size = Math.ceil(region_size / options.size);
+						
+						x_floor   = position.getX() - region_size;
+						y_floor   = position.getY() - region_size;
+						x_seiling = position.getX() + region_size + 1;
+						y_seiling = position.getY() + region_size + 1;
+						
+					} else {
+						x_floor   = Math.floor((position.getX() - region_size) / options.size);
+						y_floor   = Math.floor((position.getY() - region_size) / options.size);
+						x_seiling = Math.ceil((position.getX()  + region_size) / options.size);
 						y_seiling = Math.ceil((position.getY()  + region_size) / options.size);
+					}
 					
 					// Makesure the hash exists
 					if (hashmap[hash] === undefined) {
@@ -251,13 +301,8 @@
 								x * options.size,
 								y * options.size
 								);
-
-							// Makesure the hash exists
-							if (hashmap[hash] === undefined) {
-								hashmap[hash] = {};
-							}
-
-							hashmap[hash][entity.id] = true;
+							
+							that.putEntityIntoHashmap(entity, hash, hashmap);
 						}
 					}
 					return this;// returns the base object
@@ -276,47 +321,51 @@
 				 * @return array Containg vectors we travelled through
 				 */
 				rayTraceLine: function (entity, hashmap, start, end) {
-					// setup phase
+					// Uses Bresenham's line algorithm.
 					var
-						x     = start.getX(),
-						y     = start.getY(),
-						endX  = end.getX(),
-						endY  = end.getY(),
-						stepX = ((x > endX) ? -1 : 1),
-						stepY = ((y > endY) ? -1 : 1),
-						tMaxX,
-						tMaxY;
-					
-					// loop phase
-					//var
-					//	tX = Math.floor(start.getX() / options.size),
-					//	tY = Math.floor(start.getY() / options.size);
+						that = this,
+						x0 = Math.floor(start.getX() / options.size),
+						y0 = Math.floor(start.getY() / options.size),
+						x1 = Math.floor(end.getX() / options.size),
+						y1 = Math.floor(end.getY() / options.size),
+						dx = Math.abs(x1 - x0),
+						dy = Math.abs(y1 - y0),
+						sx = ((x0 < x1) ? 1 : -1),
+						sy = ((y0 < y1) ? 1 : -1),
+						route = [],
+						err = dx - dy,
+						e2,
+						v2 = $('thorny math vector2');
 					
 					while (true) {
-						if (tMaxX < tMaxY) {
-							tMaxX += options.size;
-							x += stepX;
-							
-						} else {
-							tMaxY += options.size;
-							y += stepY;
+						if (this.putEntityIntoHashmap(entity, x0 + '=' + y0, hashmap)) {
+							route.push(v2.factory(x0, y0));
 						}
-						console.log(x, y);
-						break;
+						
+						if (x0 === x1 && y0 === y1) {
+							break;
+						}
+						
+						e2 = 2 * err;
+						
+						if (e2 > -dy) {
+							err -= dy;
+							x0 += sx;
+							
+							// Hacky hacky code - start
+							if (this.putEntityIntoHashmap(entity, x0 + '=' + y0, hashmap)) {
+								route.push(v2.factory(x0, y0));
+							}
+							// Hacky hacky code - end
+						}
+						
+						if (e2 < dx) {
+							err += dx;
+							y0 += sy;
+						}
 					}
 					
-					/*
-					loop {
-						if(	tMaxX < tMaxY) {
-							tMaxX= tMaxX + tDeltaX;
-							X= X + stepX;
-						} else {
-							tMaxY= tMaxY + tDeltaY;
-							Y= Y + stepY;
-						}
-						NextVoxel(X,Y);
-					}
-					*/
+					return route;
 				}//rayTraceLine
 			};
 		};

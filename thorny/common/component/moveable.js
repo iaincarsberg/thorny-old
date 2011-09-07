@@ -59,7 +59,9 @@
 						
 						// Build a new movable object.
 						$.data(module, 'moveable')[entity.id] = $._.extend(
-							entity.getComponent('position').data.expose(), {
+							entity.getComponent('position').data.expose(),
+							{
+								position_last: entity.getComponent('position').data.expose().position,
 								user_facing: $('thorny math vector2').factory(options.user_facing.x, options.user_facing.y).normalize(),
 								speed: options.speed,
 								easing: options.easing,

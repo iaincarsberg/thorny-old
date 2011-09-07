@@ -39,7 +39,13 @@ class Config
 		}
 		
 		foreach ($files as $selector) {
+			$project = FALSE;
+			
 			if (is_array($selector)) {
+				if (array_key_exists('project', $selector)) {
+					$project = $selector['project'];
+				}
+				
 				if (! array_key_exists('path', $selector)) {
 					continue;
 				}
@@ -53,7 +59,7 @@ class Config
 					);
 				
 			} else {
-				$path = $this->find_path($root, $selector, $getSpecs);
+				$path = $this->find_path($root, $selector, $getSpecs, $project);
 				if (strlen($path) > 0) {
 					$this->files[] = $path;
 				}
@@ -76,12 +82,31 @@ class Config
 	 * @param string $root Contains the root folder.
 	 * @param string $selector Contains a thorny file selector
 	 * @param boolean $getSpecs Target the unit tests over the src files
+	 * @param string $project Contains the name of the project the file is
+	 * being loaded form
 	 * @return string Containing the files path
 	 */
-	public function find_path($root, $selector, $getSpecs)
+	public function find_path($root, $selector, $getSpecs, $project)
 	{
 		$bits = explode(' ', $selector);
-		$project = array_shift($bits);
+		
+		if ($project) {
+			foreach (explode(' ', $project) as $project_bit) {
+				if (count($bits) > 0 AND
+					$project_bit === $bits[0]
+				) {
+					array_shift($bits);
+					
+				} else {
+					throw new Exception("");
+				}
+			}
+			
+			$project = str_replace(' ', '/', $project);
+			
+		} else {
+			$project = array_shift($bits);
+		}
 		
 		foreach (array('', 'common' . DIRECTORY_SEPARATOR, 'browser' . DIRECTORY_SEPARATOR, 'node.js' . DIRECTORY_SEPARATOR) as $env) {
 			$path = $root . DIRECTORY_SEPARATOR . ($getSpecs ? $project . '-specs' : $project) . DIRECTORY_SEPARATOR . $env . implode($bits, DIRECTORY_SEPARATOR) . ($getSpecs ? '.spec.js' : '.js' );
