@@ -1,0 +1,7 @@
+[
+	"./config/thorny-spec-demo.json",
+	{
+		"path": "thorny-spec-demo math broken-vector2",
+		"override": "thorny math vector2"
+	}
+]
