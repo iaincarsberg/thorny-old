@@ -83,66 +83,99 @@
 		/**
 		 * Used to load a module.
 		 * @param string modules Contains the name of the module to load
+		 * @param optional string project Contains the project name, used 
+		 * inplace of root in cases where it is set.
 		 * @return object Containing the module
 		 * @throws Unknown module
 		 */
-		loadModule = function (module) {
+		loadModule = function (module, project) {
 			var 
 				i,	// Used for loop control
 				ii,	// Used for loop delimiting
-				
+			
 				// Contains the root node in the modules path
-				root = module.shift(),
-				moduleLength = module.length,
+				root,
+				moduleLength,
 				src,
-				
+			
 				// Contains the path to the module we're trying to load.
 				//   domain_path: is the browser/node.js path
 				//   common_path: is the common path
-				domain_path = root,
-				common_path = root,
+				domain_path,
+				common_path,
+				_require;
+			
+			
+			// If the project is set, then we need to process the root and
+			// module variables some more.
+			if (project) {
+				project = project.split(' ');
 				
-				/**
-				 * Used to safly require modules.
-				 * @param string path Containing a path to a possible module
-				 * @reutrn object|false Containing the module if it exists, 
-				  * otherwise false
-				 */
-				_require = function (path) {
-					try {
-						// If we're in node.js mode we need to do something a
-						// bit more complex to see if a module exists or not.
-						if (! isBrowser) {
-							// The complex bit is to check to see if the source
-							// file exists, on disk, if it does, require it, if
-							// not return false.
-							if (require('fs').statSync(path + '.js')) {
-								return {
-									path: path,
-									func: require(path)
-								};
-								
-							} else {
-								return false;
-							}
+				for (i = 0, ii = project.length; i < ii; i += 1) {
+					if (module.length > 0 &&
+						project[i] === module[0]
+					) {
+						module.shift();
+					}
+				}
+				
+				root = project.join('/');
+				
+			} else {
+				// Contains the root node in the modules path
+				root = module.shift();
+			}
+			
+			
+			moduleLength = module.length;
+			
+			// Contains the path to the module we're trying to load.
+			//   domain_path: is the browser/node.js path
+			//   common_path: is the common path
+			domain_path = root;
+			common_path = root;
+			
+			/**
+			 * Used to safly require modules.
+			 * @param string path Containing a path to a possible module
+			 * @reutrn object|false Containing the module if it exists, 
+			  * otherwise false
+			 */
+			_require = function (path) {
+				try {
+					// If we're in node.js mode we need to do something a
+					// bit more complex to see if a module exists or not.
+					if (! isBrowser) {
+						// The complex bit is to check to see if the source
+						// file exists, on disk, if it does, require it, if
+						// not return false.
+						if (require('fs').statSync(path + '.js')) {
+							return {
+								path: path,
+								func: require(path)
+							};
 							
-						// In browser land we just return the require function 
-						// as it returns false if the module doesn't exist.
 						} else {
-							var func = require(path);
-							if (func !== false) {
-								return {
-									path: path,
-									func: func
-								};
-							}
 							return false;
 						}
 						
-					} catch (e) {
+					// In browser land we just return the require function 
+					// as it returns false if the module doesn't exist.
+					} else {
+						var func = require(path);
+						if (func !== false) {
+							return {
+								path: path,
+								func: func
+							};
+						}
 						return false;
 					}
-				};
+					
+				} catch (e) {
+					return false;
+				}
+			};
 			
 			// Build the protential path to the protential domain or common 
 			// implementation.
@@ -177,11 +210,13 @@
 				i,	// Used for loop control
 				ii,	// Used for loop delimiting
 				modules,
+				project,
 				module,
 				pointer,
 				loaded,
 				modulesLength;
 			
+			project = (file.project !== undefined) ? file.project : false;
 			modules = file.path.split(' ');
 			modulesLength = modules.length;
 			
@@ -190,7 +225,7 @@
 				module = modules[i];
 				if (pointer[module] === undefined) {
 					if (i === (modulesLength - 1)) {
-						loaded = loadModule(modules);
+						loaded = loadModule(modules, project);
 						pointer['* ' + module] = loaded.func;
 						
 						if (file.autoexec) {
@@ -260,7 +295,15 @@
 					doAutoexec = false,
 					
 					// Determine if a module is a component.
-					isComponent = false;
+					isComponent = false,
+					
+					// Determine if a module is intended to override another 
+					// module that is implemented later.
+					override = false,
+					
+					// Sometimes modules arn't the 0th portion of the filepath
+					// so we need to store it in here.
+					project = false;
 				
 				// Its possible to place objects in the config files to preform
 				// specific actions, this block detects those features and sets
@@ -274,6 +317,23 @@
 						file.autoexec === true
 					) {
 						doAutoexec = true;
+					}
+					
+					// Overriding is a way to replace default functionality 
+					// without having to manually edit core engine files.
+					if (file.override !== undefined &&
+						typeof file.override === 'string'
+					) {
+						override = file.override;
+					}
+					
+					// Projects are a way of seperating logic into different 
+					// folders, allowing developers to place their own code
+					// away from the core engine.
+					if (file.project !== undefined &&
+						typeof file.project === 'string'
+					) {
+						project = file.project;
 					}
 					
 					// If the logic is within the ./module/browser/ directory
@@ -324,7 +384,9 @@
 					list.push({
 						path: file,
 						autoexec: (doAutoexec || isComponent),
-						module: false
+						module: false,
+						project: project,
+						override: override
 					});
 					loop();
 				}
@@ -388,9 +450,24 @@
 				moduleInstanceData = {},
 				
 				// Contains a list of initiated modules
-				initiatedModules = {};
+				initiatedModules = {},
+				
+				// Contains a list of modules that have been overridden with 
+				// another module
+				overridden = {};
 			
 			buildModuleList(varargs, function (list) {
+				// Process the loaded modules into the overridden object.
+				var 
+					i,			// Used for loop control
+					ii;	// Used for loop delimiting
+
+				for (i = 0, ii = list.length; i < ii; i += 1) {
+					if (list[i].override) {
+						overridden[list[i].override] = list[i].path;
+					}
+				}
+				
 				processModules(list, function (namespace) {
 					// If the callback was specified, and its a function execute it.
 					if (callback === undefined ||
@@ -406,6 +483,12 @@
 					 * handler which can be used to find the target.
 					 */
 					var handle = function (path) {
+						// If the entered path is within the overridden object
+						// it means we need to use an alternative module.
+						if (overridden[path] !== undefined) {
+							path = overridden[path];
+						}
+						
 						// We return a self executing anon function so we can 
 						// localise the namespace, which allows us to chain 
 						// calls using .find()

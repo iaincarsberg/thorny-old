@@ -5,7 +5,9 @@
 	 * correctly to the browser.
 	 */
 	
-	require.paths.unshift(__dirname + '/../../');
+	require.paths.unshift(__dirname + '/../');
+	
+	var runner = require('thorny-specs/test-runner');
 	
 	describe('The base module interface', function () {
 		it('should return a function', function () {
@@ -326,6 +328,15 @@
 					});
 				});//it
 			});// desc defined and getDefined
-		});// desc
-	});//desc
+			
+			describe('overriding', function () {
+				it('should allow you to override another module', function () {
+					runner(function ($, done) {
+						expect($('thorny math vector2')).toEqual('a broken vector2 implementation');
+						done();
+					}, './thorny-spec-demo/config/break-thorny-math-vector2.json');
+				});// it should allow you to override another module
+			});// desc overriding
+		});// desc the third function
+	});//desc The base module interface
 }());
