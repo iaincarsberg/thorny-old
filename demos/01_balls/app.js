@@ -1,5 +1,5 @@
 /*global console Stats, window*/
-require('./thorny/base')('./config/default.json', './demos/config.processing.json')(function ($) {
+require('./thorny/base')('./config/default.json', './demos/01_balls/config.json')(function ($) {
 	var 
 		gameLoop = $('thorny core game-loop').factory(),
 		stats = new Stats();

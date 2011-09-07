@@ -1,7 +1,7 @@
 <?php
 
-include_once dirname(__FILE__).'/../build/config.php';
-$root = dirname(__FILE__) . '/..';
+include_once dirname(__FILE__).'/../../build/config.php';
+$root = dirname(__FILE__) . '/../..';
 $raw_files = array_merge(
 	Config::factory(
 		$root,
@@ -10,7 +10,7 @@ $raw_files = array_merge(
 		),
 	Config::factory(
 		$root,
-		'demos/config.processing.json',
+		'demos/02_navigation/config.json',
 		FALSE
 		)
 );
@@ -60,7 +60,7 @@ if (typeof console === 'undefined') {
 		log: function() {}
 	};
 }
-<?php echo file_get_contents('app.processing.js'); ?>
+<?php echo file_get_contents('app.js'); ?>
 	</script>
 </body>
 </html>

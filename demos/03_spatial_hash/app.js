@@ -1,8 +1,10 @@
 /*global console Stats, window*/
-require('./thorny/base')('./config/default.json', './demos/navigation/config.json')(function ($) {
+require('./thorny/base')('./config/default.json', './demos/03_spatial_hash/config.json')(function ($) {
 	var 
 		gameLoop = $('thorny core game-loop').factory(),
 		stats = new Stats();
+		
+	$.data('core', 'hashmap', {instance: false});
 	
 	// Add Stats - Start
 	stats.domElement.style.position = 'absolute';
@@ -90,6 +92,14 @@ require('./thorny/base')('./config/default.json', './demos/navigation/config.jso
 			$.es().searchByComponents('moveable')
 				.each(function (moveable) {
 					moveable.data.execute(this);
+				});
+			
+			// Process the spatial hash
+			$.spatial_hasher()
+				.inject($.getTag('player'))
+				.process(function (instance) {
+					$.data('core', 'hashmap')
+						.instance = instance.getHashmap();
 				});
 
 		}, function () {

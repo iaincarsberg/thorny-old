@@ -127,6 +127,9 @@
 						
 						// If a direction is set, update it.
 						if (direction) {
+							// Backup the last position.
+							self.position_last = self.position;
+							
 							// Set the position and direction back into the 
 							// position component.
 							self.facing = direction;
