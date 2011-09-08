@@ -77,14 +77,21 @@
 					var x, y, key, 
 						hashmap = $.hashmap().getHashmap(),
 						size = $('thorny spatial-hasher base').setup(undefined, true).size,
-						playerId = $.getTag('player').id;
+						playerId = $.getTag('player').id,
+						worldId = $.getTag('world').id;
 					
 					for (key in hashmap) {
 						if (hashmap.hasOwnProperty(key)) {
 							y = key.split('=');
 							x = y[0];
 							y = y[1];
-
+							
+							if (hashmap[key][worldId]) {
+								pjs.fill(124, 197, 201, 100);
+								pjs.stroke(23, 153, 116, 200);
+								pjs.rect(x * size, y * size, size, size);
+							}
+							
 							if (hashmap[key][playerId]) {
 								pjs.fill(197, 124, 201, 150);
 								pjs.stroke(153, 23, 116, 200);

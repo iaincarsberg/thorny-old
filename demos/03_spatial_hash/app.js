@@ -102,6 +102,9 @@ require('./thorny/base')('./config/default.json', './demos/03_spatial_hash/confi
 				.each(function (renderer) {
 					renderer.data.execute(this);
 				});
+				
+				
+			// gameLoop.stop();
 			
 			// Update MrDoob's FPS counter.
 			stats.update();

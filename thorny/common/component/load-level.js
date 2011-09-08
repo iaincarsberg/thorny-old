@@ -104,6 +104,10 @@
 									}
 								}
 							});
+							
+							// Alert anything listening that the level has 
+							// been altered
+							entity.notifyObservers('altered');
 						});
 					}
 				};

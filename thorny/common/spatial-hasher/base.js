@@ -160,9 +160,57 @@
 					) {
 						that.hashRegion(item, hashmap);
 					
+					// If an entity has a loaded level then we need to raster
+					// the parimiter of the loaded level.
+					} else if (
+						item.hasComponent !== undefined &&
+						item.hasComponent('load-level')
+					) {
+						item.addObserver(
+							$('thorny core observer')({
+								altered: function (entity) {
+									entity
+										.getComponent('load-level')
+										.each(function (level) {
+											if (! level ||
+												! level.data ||
+												! level.data.iterator
+											) {
+												return;
+											}
+
+											var 
+												i, ii,
+												polys = level.data.iterator(),
+												poly,
+												vectors,
+												route = [],
+												map = {};
+
+											while ((poly = polys.step())) {
+												vectors = poly.node.getVector2s();
+												
+												route = [].concat(
+													that.rayTraceLine(entity, map, vectors[0], vectors[1]),
+													that.rayTraceLine(entity, map, vectors[1], vectors[2]),
+													that.rayTraceLine(entity, map, vectors[2], vectors[0])
+													);
+												
+												for (i = 0, ii = route.length; i < ii; i += 1) {
+													that.putEntityIntoHashmap(
+														entity, 
+														route[i].getX() + '=' +route[i].getY(),
+														hashmap
+														);
+												}
+											}
+										});
+								}
+							})
+						);
+					
 					// Otherwise we need to rasterise a single point.
 					} else {
-						return that;
 						(function () {
 							// Hash the input
 							var hash = that.hash(item.getX(), item.getY());
