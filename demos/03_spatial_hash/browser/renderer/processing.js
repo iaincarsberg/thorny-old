@@ -75,10 +75,10 @@
 					
 					// Draw the hashmap
 					var x, y, key, 
-						hashmap = $.data('core', 'hashmap').instance,
+						hashmap = $.hashmap().getHashmap(),
 						size = $('thorny spatial-hasher base').setup(undefined, true).size,
 						playerId = $.getTag('player').id;
-
+					
 					for (key in hashmap) {
 						if (hashmap.hasOwnProperty(key)) {
 							y = key.split('=');

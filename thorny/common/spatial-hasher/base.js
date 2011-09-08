@@ -162,6 +162,7 @@
 					
 					// Otherwise we need to rasterise a single point.
 					} else {
+						return that;
 						(function () {
 							// Hash the input
 							var hash = that.hash(item.getX(), item.getY());

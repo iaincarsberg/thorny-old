@@ -126,7 +126,12 @@
 						
 						
 						// If a direction is set, update it.
-						if (direction) {
+						if (direction &&
+							! (
+								direction.getX() === 0 && 
+								direction.getY() === 0
+							)
+						) {
 							// Backup the last position.
 							self.position_last = self.position;
 							
@@ -137,6 +142,23 @@
 								direction,
 								distance
 								);
+							
+							entity.notifyObservers('moved');
+						
+						} else {
+							// If the last position is different from the 
+							// current position it means we havn't executed 
+							// the last step in the movement.
+							//
+							// This step updates the entites position to
+							// represent the exact location is in, and removes
+							// its last ticks worth of funnel movement.
+							if (self.position_last.getX() !== self.position.getX() &&
+								self.position_last.getY() !== self.position.getY()
+							) {
+								self.position_last = self.position;
+								entity.notifyObservers('moved');
+							}
 						}
 					},
 					

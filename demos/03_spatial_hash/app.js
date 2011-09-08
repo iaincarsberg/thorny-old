@@ -24,7 +24,8 @@ require('./thorny/base')('./config/default.json', './demos/03_spatial_hash/confi
 		})
 		.addComponent('moveable', {
 			speed: 128
-		});
+		})
+		.addComponent('hashable');
 	
 	///////////
 	// START //
@@ -41,6 +42,7 @@ require('./thorny/base')('./config/default.json', './demos/03_spatial_hash/confi
 		.addTag('world')
 		.addComponent('load-level', './content/levels/room1.json')
 		.addComponent('load-level', './content/levels/room2.json')
+		.addComponent('hashable')
 		.triggers('world-loaded');
 	
 	// Fudge in a click event handler moving the ball around.
@@ -93,15 +95,7 @@ require('./thorny/base')('./config/default.json', './demos/03_spatial_hash/confi
 				.each(function (moveable) {
 					moveable.data.execute(this);
 				});
-			
-			// Process the spatial hash
-			$.spatial_hasher()
-				.inject($.getTag('player'))
-				.process(function (instance) {
-					$.data('core', 'hashmap')
-						.instance = instance.getHashmap();
-				});
-
+				
 		}, function () {
 			// Execute all of the renderer's
 			$.es().searchByComponents('renderer')

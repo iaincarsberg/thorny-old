@@ -8,5 +8,6 @@
 	},
 	"thorny component position",
 	"thorny component moveable",
-	"thorny component follow-path"
+	"thorny component follow-path",
+	"thorny component hashable"
 ]
