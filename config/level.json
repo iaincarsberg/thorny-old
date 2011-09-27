@@ -7,5 +7,7 @@
 	"thorny level node-collection",
 	"thorny level 2d mesh",
 	"thorny level pathfinder astar",
-	"thorny level pathfinder funnel"
+	"thorny level pathfinder funnel",
+	"thorny level segment-networkers file",
+	"thorny level segment-networkers adjacent"
 ]

@@ -114,6 +114,32 @@
 		};
 		
 		/**
+		 * Used to network two level segments together.
+		 * @param string method Contains the method in which the segments 
+		 * should be networked together.
+		 * @param object level
+		 * @param object components
+		 * @param optional array file_network
+		 * @return void
+		 */
+		base.network_segments = function (method, level, components, file_network) {
+			// Default the file_network to false
+			if (! file_network || 
+				! file_network.length ||
+				file_network.length === 0
+			) {
+				file_network = false;
+			}
+			
+			// Execute the networker
+			$('thorny level segment-networkers ' + method)(
+				level, 
+				components, 
+				file_network
+				);
+		};
+		
+		/**
 		 * Used to see if a loaded level looks valid.
 		 * @param object Containing a raw unparsed level
 		 * @return void

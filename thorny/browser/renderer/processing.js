@@ -53,25 +53,33 @@
 					pjs.stroke(51, 153, 0);
 					pjs.fill(51, 153, 0);
 					
-					// Render the world
-					$.getTag('world')
-						.getComponent('load-level')
-						.each(function (level) {
-							var 
-								polys = level.data.iterator(),
-								poly,
-								vectors;
-							
-							while ((poly = polys.step())) {
-								vectors = poly.node.getVector2s();
-								
-								pjs.triangle(
-									vectors[0].getX(), vectors[0].getY(),
-									vectors[1].getX(), vectors[1].getY(),
-									vectors[2].getX(), vectors[2].getY()
-									);
-							}
-						});
+					// Render the world, if it contains loaded levels
+					if ($.getTag('world').hasComponent('load-level')) {
+						$.getTag('world')
+							.getComponent('load-level')
+							.each(function (level) {
+								if (level === undefined ||
+									level.data === undefined ||
+									level.data.iterator === undefined
+								) {
+									return;
+								}
+								var 
+									polys = level.data.iterator(),
+									poly,
+									vectors;
+
+								while ((poly = polys.step())) {
+									vectors = poly.node.getVector2s();
+
+									pjs.triangle(
+										vectors[0].getX(), vectors[0].getY(),
+										vectors[1].getX(), vectors[1].getY(),
+										vectors[2].getX(), vectors[2].getY()
+										);
+								}
+							});
+					}
 					
 					// Draw the drawable items to the screen
 					$.es().searchByComponents('drawable', 'position')
